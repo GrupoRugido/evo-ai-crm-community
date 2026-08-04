@@ -250,5 +250,18 @@ messages:
       - "not_equal_to"
       - "contains"
       - "does_not_contain"
+  # Quem enviou a mensagem: "user" (atendente humano) ou "agentbot" (IA).
+  # Permite a regra "atendente respondeu -> tira a conversa de pending", que e o
+  # unico jeito de fazer a IA parar de responder por cima do humano.
+  #
+  # Os valores DEVEM ser minusculos. message_query_string envolve a coluna em
+  # LOWER() para data_type "text", e o FilterService so faz downcase dos valores
+  # quando attribute_key == "content" -- entao "User" nunca casaria.
+  sender_type:
+    attribute_type: "standard"
+    data_type: "text"
+    filter_operators:
+      - "equal_to"
+      - "not_equal_to"
 
 ### ----- End of Message Filters ----- ###

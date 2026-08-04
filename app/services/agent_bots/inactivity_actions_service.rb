@@ -1,4 +1,9 @@
 class AgentBots::InactivityActionsService
+  # EVO-CUSTOM: teto do trecho guardado para a IA na acao 'reopen'. Existe para
+  # nao estourar o prompt do agente numa conversa longa de atendimento humano.
+  MISSED_CONTEXT_MAX_MESSAGES = 50
+  MISSED_CONTEXT_MAX_CHARS = 4000
+
   def initialize(conversation, agent_bot)
     @conversation = conversation
     @agent_bot = agent_bot
@@ -143,6 +148,8 @@ class AgentBots::InactivityActionsService
       execute_interact_action(action_config, action_index)
     when 'finalize'
       execute_finalize_action(action_config, action_index)
+    when 'reopen'
+      execute_reopen_action(action_config, action_index)
     else
       Rails.logger.error "[InactivityActions] Unknown action type: #{action_type}"
     end
@@ -287,6 +294,83 @@ class AgentBots::InactivityActionsService
       Rails.logger.error "[InactivityActions] ❌ Error finalizing conversation: #{e.message}"
       Rails.logger.error e.backtrace.first(5).join("\n")
     end
+  end
+
+  # ---------------------------------------------------------------------------
+  # EVO-CUSTOM: devolve a conversa para a IA depois do tempo de inatividade.
+  #
+  # Fecha o ciclo da intervencao humana: a regra de automacao tira a conversa de
+  # "pending" quando o atendente responde (e a IA cala); passado o tempo
+  # configurado nesta mesma tela, esta acao devolve para "pending" e a IA volta.
+  #
+  # Guarda em additional_attributes['pending_ai_context'] o trecho que a IA NAO
+  # viu. A entrega desse contexto nao acontece aqui de proposito: quem injeta e o
+  # BotRuntime::DelegationService, junto com a proxima mensagem real do cliente.
+  # Mandar o contexto agora faria a IA responder sozinha e o cliente receberia uma
+  # mensagem solta -- exatamente o que a retomada silenciosa quer evitar.
+  # ---------------------------------------------------------------------------
+  def execute_reopen_action(action_config, action_index)
+    if @conversation.pending?
+      Rails.logger.info "[InactivityActions] Skipping reopen - conversation #{@conversation.id} is already pending"
+      return
+    end
+
+    Rails.logger.info "[InactivityActions] Executing reopen action - returning conversation to the AI"
+
+    begin
+      context = build_missed_context
+
+      if context.present?
+        attributes = (@conversation.additional_attributes || {}).merge('pending_ai_context' => context)
+        @conversation.update!(additional_attributes: attributes, status: :pending)
+        Rails.logger.info "[InactivityActions] Stored pending_ai_context (#{context.length} chars)"
+      else
+        @conversation.update!(status: :pending)
+        Rails.logger.info '[InactivityActions] No missed context to store'
+      end
+
+      record_execution(action_config, action_index, 'reopen', nil)
+
+      Rails.logger.info "[InactivityActions] ✅ Conversation #{@conversation.id} returned to pending"
+    rescue StandardError => e
+      Rails.logger.error "[InactivityActions] ❌ Error reopening conversation: #{e.message}"
+      Rails.logger.error e.backtrace.first(5).join("\n")
+    end
+  end
+
+  # Tudo que aconteceu depois da ultima fala da IA. E exatamente o que ficou fora
+  # da sessao dela: mensagem de saida nunca invoca o agente (AgentBotListener corta
+  # em `return unless message.incoming?`), e as mensagens de entrada que chegaram
+  # durante o atendimento humano foram puladas porque a conversa nao estava pending.
+  def build_missed_context
+    last_ai_message = @conversation.messages.reorder(nil)
+                                   .where(message_type: :outgoing, sender_type: 'AgentBot')
+                                   .order(created_at: :desc).first
+
+    scope = @conversation.messages.reorder(nil).where.not(message_type: :activity)
+    scope = scope.where('messages.created_at > ?', last_ai_message.created_at) if last_ai_message
+
+    missed = scope.order(created_at: :asc).last(MISSED_CONTEXT_MAX_MESSAGES)
+    return nil if missed.blank?
+
+    lines = missed.filter_map do |message|
+      text = message.content.to_s.strip
+      next if text.blank?
+
+      "#{missed_context_role(message)}: #{text}"
+    end
+    return nil if lines.blank?
+
+    body = lines.join("\n")
+    body = "#{body[0, MISSED_CONTEXT_MAX_CHARS]}..." if body.length > MISSED_CONTEXT_MAX_CHARS
+    body
+  end
+
+  def missed_context_role(message)
+    return 'Cliente' if message.incoming?
+    return 'IA' if message.sender_type == 'AgentBot'
+
+    'Atendente'
   end
 
   def record_execution(action_config, action_index, action_type, message_sent)

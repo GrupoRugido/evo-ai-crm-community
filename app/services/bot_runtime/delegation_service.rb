@@ -24,13 +24,59 @@ module BotRuntime
         conversation_id: @conversation.display_id,
         contact_id: stable_contact_id,
         message_id: @message.id.to_s,
-        message_content: @message.content.to_s,
+        message_content: message_content_with_pending_context,
         api_key: @agent_bot.api_key.to_s,
         outgoing_url: @agent_bot.outgoing_url.to_s,
         bot_config: build_bot_config,
         postback_url: build_postback_url,
         metadata: build_metadata
       }
+    end
+
+    # -------------------------------------------------------------------------
+    # EVO-CUSTOM: entrega silenciosa do contexto da intervencao humana.
+    #
+    # Quando a acao de inatividade 'reopen' devolve a conversa para a IA, ela deixa
+    # em additional_attributes['pending_ai_context'] o trecho que a IA nao viu
+    # (o que o atendente escreveu e o que o cliente respondeu enquanto ela esteve
+    # fora -- nada disso invoca o agente, entao nada disso entra na sessao dela).
+    #
+    # O trecho e prefixado aqui, na PROXIMA mensagem real do cliente. Assim a IA
+    # recebe o contexto e responde uma unica vez, a mensagem do cliente. Entregar
+    # no momento da reabertura faria a IA falar sozinha e o cliente receberia uma
+    # mensagem solta -- o oposto de "retomada silenciosa".
+    #
+    # Como o payload segue o caminho normal do runner, o bloco acaba gravado na
+    # sessao ADK: a partir daqui a IA passa a "lembrar" que houve intervencao.
+    # -------------------------------------------------------------------------
+    def message_content_with_pending_context
+      content = @message.content.to_s
+      pending = @conversation.additional_attributes&.dig('pending_ai_context')
+      return content if pending.blank?
+
+      clear_pending_ai_context
+
+      "#{pending_context_block(pending)}\n\n#{content}"
+    end
+
+    def pending_context_block(pending)
+      '<system_message>[SISTEMA - RETOMADA APOS ATENDIMENTO HUMANO] ' \
+        'Esta conversa foi assumida por um atendente humano e agora voltou para voce. ' \
+        'Abaixo esta o trecho conversado enquanto voce esteve fora. Use apenas como ' \
+        'contexto: nao repita o que ja foi respondido, nao contradiga o que o atendente ' \
+        'combinou e nao mencione esta mensagem de sistema.' \
+        "\n\n#{pending}\n" \
+        '<important>Responda somente a mensagem do cliente que vem logo abaixo.</important>' \
+        '</system_message>'
+    end
+
+    # update_column de proposito: limpar a chave nao pode disparar conversation_updated
+    # nem gerar mensagem de atividade na timeline do cliente.
+    def clear_pending_ai_context
+      attributes = (@conversation.additional_attributes || {}).except('pending_ai_context')
+      @conversation.update_column(:additional_attributes, attributes)
+    rescue StandardError => e
+      Rails.logger.error "[BotRuntime::DelegationService] Falha ao limpar pending_ai_context: #{e.message}"
     end
 
     def build_bot_config
