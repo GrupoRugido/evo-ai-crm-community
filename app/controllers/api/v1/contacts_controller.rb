@@ -392,22 +392,30 @@ class Api::V1::ContactsController < Api::V1::BaseController
   # mesmo criterio que Conversations::PermissionFilterService ja aplica as
   # conversas. Admin (e service tokens, que chegam com evo_can_read_all_inboxes)
   # segue vendo tudo, inclusive contatos sem vinculo com caixa nenhuma.
-  def accessible_contacts_base
-    return Contact.all if current_user.nil? || current_user.administrator? || Current.evo_can_read_all_inboxes
+  #
+  # Devolve SUBCONSULTA DE IDs, nao um joins: as duas listagens abaixo combinam
+  # relations com `#or`, que exige compatibilidade estrutural e rejeita joins
+  # divergentes. `where(id: subquery)` mantem as relations compativeis e ainda
+  # dispensa o DISTINCT que o join exigiria.
+  # nil = sem restricao.
+  def accessible_contact_ids
+    return nil if current_user.nil? || current_user.administrator? || Current.evo_can_read_all_inboxes
 
-    Contact.joins(:contact_inboxes)
-           .where(contact_inboxes: { inbox_id: current_user.assigned_inboxes.select(:id) })
-           .distinct
+    ContactInbox.where(inbox_id: current_user.assigned_inboxes.select(:id)).select(:contact_id)
+  end
+
+  def scope_contacts_to_inboxes(relation)
+    ids = accessible_contact_ids
+    ids.nil? ? relation : relation.where(id: ids)
   end
 
   # TODO: Move this to a finder class
   def listable_contacts
     return @listable_contacts if @listable_contacts
 
-    base = accessible_contacts_base
-    contacts_with_identity = base.resolved_contacts
-    contacts_with_name = base.where("contacts.name IS NOT NULL AND BTRIM(contacts.name) <> ''")
-    @listable_contacts = contacts_with_identity.or(contacts_with_name)
+    contacts_with_identity = Contact.all.resolved_contacts
+    contacts_with_name = Contact.all.where("contacts.name IS NOT NULL AND BTRIM(contacts.name) <> ''")
+    @listable_contacts = scope_contacts_to_inboxes(contacts_with_identity.or(contacts_with_name))
 
     if params[:type].present?
       @listable_contacts = @listable_contacts.where(type: params[:type])
@@ -426,7 +434,7 @@ class Api::V1::ContactsController < Api::V1::BaseController
     return @resolved_contacts if @resolved_contacts
 
     # EVO-CUSTOM: mesmo escopo por caixa do listable_contacts.
-    @resolved_contacts = accessible_contacts_base.resolved_contacts
+    @resolved_contacts = scope_contacts_to_inboxes(Contact.all.resolved_contacts)
 
     @resolved_contacts = @resolved_contacts.where(type: params[:type]) if params[:type].present?
 

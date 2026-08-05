@@ -88,10 +88,10 @@ class SearchService
     base = params[:include_groups] == 'true' ? Contact.all : Contact.non_groups
     # EVO-CUSTOM: mesmo escopo por caixa que filter_conversations ja aplica
     # logo acima — sem isto a busca global vazava contatos de caixas alheias.
+    # Subconsulta de IDs em vez de joins: dispensa DISTINCT (que brigaria com
+    # o order_on_last_activity_at aplicado adiante).
     unless @current_user.nil? || @current_user.administrator? || Current.evo_can_read_all_inboxes
-      base = base.joins(:contact_inboxes)
-                 .where(contact_inboxes: { inbox_id: accessable_inbox_ids })
-                 .distinct
+      base = base.where(id: ContactInbox.where(inbox_id: accessable_inbox_ids).select(:contact_id))
     end
     @contacts = base.where(
       "name ILIKE :search OR email ILIKE :search OR phone_number
