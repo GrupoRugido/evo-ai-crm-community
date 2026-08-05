@@ -26,7 +26,8 @@ class AutomationRuleListener < BaseListener
 
     return unless rule_present?('message_created', account)
 
-    rules = current_account_rules('message_created', account)
+    rules = current_account_rules('message_created', account,
+                                  workspace_id: workspace_id_for(message: message))
 
     rules.each do |rule|
       evaluate_and_execute_rule(
@@ -91,7 +92,8 @@ class AutomationRuleListener < BaseListener
 
     return unless rule_present?('contact_created', account)
 
-    rules = current_account_rules('contact_created', account)
+    rules = current_account_rules('contact_created', account,
+                                  workspace_id: workspace_id_for(contact: contact))
 
     rules.each do |rule|
       # Para eventos de contato que só têm condições de contato (ou nenhuma),
@@ -143,7 +145,8 @@ class AutomationRuleListener < BaseListener
 
     return unless rule_present?('contact_updated', account)
 
-    rules = current_account_rules('contact_updated', account)
+    rules = current_account_rules('contact_updated', account,
+                                  workspace_id: workspace_id_for(contact: contact))
 
     rules.each do |rule|
       # Para eventos de contato que só têm condições de contato (ou nenhuma),
@@ -162,8 +165,30 @@ class AutomationRuleListener < BaseListener
     current_account_rules(event_name).any?
   end
 
-  def current_account_rules(event_name, _account = nil)
-    AutomationRule.where(event_name: event_name, active: true)
+  # EVO-CUSTOM: filtra as regras pelo workspace do registro que disparou o evento.
+  #
+  # Sem isso, TODA regra ativa daquele gatilho e avaliada em TODO evento — e cada
+  # avaliacao do ConditionsFilterService monta e executa uma query no Postgres.
+  # Com 10 clientes x 10 regras de "mensagem criada", uma unica mensagem custa
+  # 100 queries, 90 delas de clientes que nada tem a ver com aquela conversa.
+  # A condicao filtra o DISPARO, mas o custo da AVALIACAO acontece antes dela.
+  #
+  # Regra sem workspace (NULL) continua rodando para todos — sao as nossas,
+  # globais, e e o que mantem tudo funcionando enquanto o retrofit nao roda.
+  def current_account_rules(event_name, _account = nil, workspace_id: nil)
+    scope = AutomationRule.where(event_name: event_name, active: true)
+    return scope if workspace_id.blank?
+
+    scope.where('automation_rules.workspace_id = ? OR automation_rules.workspace_id IS NULL', workspace_id)
+  end
+
+  # O workspace do evento vem da caixa de entrada — e por ela que conversa,
+  # mensagem e contato se ligam a um cliente.
+  def workspace_id_for(conversation: nil, message: nil, contact: nil)
+    inbox = message&.inbox || conversation&.inbox
+    return inbox.workspace_id if inbox.respond_to?(:workspace_id) && inbox&.workspace_id.present?
+
+    contact&.workspace_id if contact.respond_to?(:workspace_id)
   end
 
   def performed_by_automation?(event)
@@ -237,7 +262,8 @@ class AutomationRuleListener < BaseListener
 
     return unless rule_present?(event_name, account)
 
-    rules = current_account_rules(event_name, account)
+    rules = current_account_rules(event_name, account,
+                                  workspace_id: workspace_id_for(conversation: conversation))
 
     rules.each do |rule|
       evaluate_and_execute_rule(

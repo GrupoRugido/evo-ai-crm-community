@@ -10,7 +10,9 @@ class Api::V1::LabelsController < Api::V1::BaseController
   before_action :fetch_label, except: [:index, :create]
 
   def index
-    @labels = Label.all
+    # EVO-CUSTOM: etiqueta global (NULL) segue visivel — varias sao nossas e
+    # usadas por automacao em todos os clientes (ex.: agente-off).
+    @labels = workspace_scope(Label.all)
     
     apply_pagination
     

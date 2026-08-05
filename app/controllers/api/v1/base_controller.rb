@@ -1,6 +1,11 @@
 class Api::V1::BaseController < Api::BaseController
   include SwitchLocale
   include ApiResponseHelper
+  # EVO-CUSTOM: resolve Current.workspace_id e expoe workspace_scope/_strict.
+  # Fica no BaseController da v1 (depois da autenticacao, que roda no
+  # Api::BaseController) para que qualquer controller possa escopar sem repetir
+  # o include. Sem workspace ativo os helpers sao no-op.
+  include WorkspaceScopeConcern
 
   around_action :switch_locale_using_default
 

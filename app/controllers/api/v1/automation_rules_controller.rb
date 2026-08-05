@@ -29,7 +29,9 @@ class Api::V1::AutomationRulesController < Api::V1::BaseController
   public
 
   def index
-    @automation_rules = AutomationRule.all
+    # EVO-CUSTOM: escopo estrito — a lista de automacoes de um cliente nao
+    # deve mostrar as nossas regras globais (poluiria a tela dele).
+    @automation_rules = workspace_scope_strict(AutomationRule.all)
 
     apply_pagination
     

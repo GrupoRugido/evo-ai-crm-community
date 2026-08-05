@@ -11,6 +11,11 @@ module Current
   thread_mattr_accessor :evo_permission_cache
   thread_mattr_accessor :evo_role_key
   thread_mattr_accessor :evo_can_read_all_inboxes
+  # EVO-CUSTOM: workspace ativo da requisicao. Para usuario de cliente e sempre
+  # o dele; para nosso admin vem do seletor (header X-Workspace-Id) e pode ser
+  # nil, que significa "todos" — e como continuamos enxergando a instalacao
+  # inteira. Ver WorkspaceScopeConcern.
+  thread_mattr_accessor :workspace_id
 
   def self.reset
     Current.user = nil
@@ -25,5 +30,6 @@ module Current
     Current.evo_permission_cache = nil
     Current.evo_role_key = nil
     Current.evo_can_read_all_inboxes = nil
+    Current.workspace_id = nil
   end
 end

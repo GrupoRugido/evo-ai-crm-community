@@ -112,6 +112,12 @@ class ContactInboxWithContactBuilder
       type: contact_attributes[:type] || 'person'
     )
 
+    # EVO-CUSTOM: contato nasce carimbado com o workspace da caixa que o trouxe.
+    # Sem isto o find_contact_by_* acima nunca reencontraria o contato criado
+    # (ele ficaria com workspace nulo e o lookup e escopado), gerando duplicata
+    # a cada mensagem.
+    contact.workspace_id = inbox_workspace_id if contact.respond_to?(:workspace_id=)
+
     # Contacts created via inbox/channel flows are usually followed by conversation creation.
     # Avoid creating duplicate default pipeline items (contact + conversation) for the same flow.
     contact.skip_default_pipeline_assignment = true
@@ -126,6 +132,28 @@ class ContactInboxWithContactBuilder
     contact ||= find_contact_by_instagram_source_id(source_id) if instagram_channel?
 
     contact
+  end
+
+  # EVO-CUSTOM: a busca de contato existente passa a ser POR WORKSPACE.
+  #
+  # Sem isto, um telefone e um contato so na instalacao inteira: se duas clinicas
+  # nossas (as vezes concorrentes) atendem o mesmo lead, as duas compartilham o
+  # MESMO registro — mesmo nome, mesmas etiquetas, mesmas notas, e editar de um
+  # lado altera do outro. Com o escopo, cada workspace tem o seu.
+  #
+  # inbox_workspace_id nil (caixa ainda sem workspace) preserva o comportamento
+  # antigo, o que mantem tudo funcionando enquanto o retrofit nao roda.
+  def contact_lookup_scope
+    ws = inbox_workspace_id
+    return Contact.all if ws.blank?
+
+    Contact.where(workspace_id: ws)
+  end
+
+  def inbox_workspace_id
+    return nil unless inbox.respond_to?(:workspace_id)
+
+    inbox.workspace_id
   end
 
   def instagram_channel?
@@ -163,13 +191,13 @@ class ContactInboxWithContactBuilder
   def find_contact_by_identifier(identifier)
     return if identifier.blank?
 
-    Contact.find_by(identifier: identifier)
+    contact_lookup_scope.find_by(identifier: identifier)
   end
 
   def find_contact_by_email(email)
     return if email.blank?
 
-    Contact.from_email(email)
+    contact_lookup_scope.from_email(email)
   end
 
   def find_contact_by_phone_number(phone_number)
@@ -180,6 +208,6 @@ class ContactInboxWithContactBuilder
     normalized = Whatsapp::PhoneNumberNormalizer.to_e164(phone_number)
     return if normalized.blank?
 
-    Contact.find_by(phone_number: normalized)
+    contact_lookup_scope.find_by(phone_number: normalized)
   end
 end
