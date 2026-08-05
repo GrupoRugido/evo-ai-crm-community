@@ -384,7 +384,17 @@ class Api::V1::ContactsController < Api::V1::BaseController
       params[:labels]&.sort&.join(','),
       params[:q] # search query, if any
     ].compact.join('/')
-    "contacts_count/#{key_parts.presence || 'all'}"
+    # EVO-CUSTOM: o escopo por caixa faz o total DEPENDER do usuario. Sem esta
+    # parte na chave, o contador de um cliente era servido para outro por ate
+    # 1 minuto (visto na pratica: cliente com 271 contatos recebia 319).
+    # `scope` = "all" para quem ve tudo, ou a lista de caixas do usuario.
+    "contacts_count/#{contacts_count_scope_key}/#{key_parts.presence || 'all'}"
+  end
+
+  def contacts_count_scope_key
+    return 'all' if accessible_contact_ids.nil?
+
+    Digest::MD5.hexdigest(current_user.assigned_inboxes.order(:id).pluck(:id).join(','))
   end
 
   # EVO-CUSTOM: escopo por caixa de entrada. Usuario nao-admin ve apenas os
