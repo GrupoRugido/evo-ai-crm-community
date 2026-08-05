@@ -10,7 +10,7 @@ name: Rugido - Build & Publish (ghcr)
 
 on:
   push:
-    branches: [feat/intervencao-humana]
+    branches: [feat/intervencao-humana, feat/workspaces]
   workflow_dispatch:
 
 permissions:

@@ -387,12 +387,26 @@ class Api::V1::ContactsController < Api::V1::BaseController
     "contacts_count/#{key_parts.presence || 'all'}"
   end
 
+  # EVO-CUSTOM: escopo por caixa de entrada. Usuario nao-admin ve apenas os
+  # contatos vinculados (via contact_inboxes) as caixas em que e membro — o
+  # mesmo criterio que Conversations::PermissionFilterService ja aplica as
+  # conversas. Admin (e service tokens, que chegam com evo_can_read_all_inboxes)
+  # segue vendo tudo, inclusive contatos sem vinculo com caixa nenhuma.
+  def accessible_contacts_base
+    return Contact.all if current_user.nil? || current_user.administrator? || Current.evo_can_read_all_inboxes
+
+    Contact.joins(:contact_inboxes)
+           .where(contact_inboxes: { inbox_id: current_user.assigned_inboxes.select(:id) })
+           .distinct
+  end
+
   # TODO: Move this to a finder class
   def listable_contacts
     return @listable_contacts if @listable_contacts
 
-    contacts_with_identity = Contact.all.resolved_contacts
-    contacts_with_name = Contact.all.where("contacts.name IS NOT NULL AND BTRIM(contacts.name) <> ''")
+    base = accessible_contacts_base
+    contacts_with_identity = base.resolved_contacts
+    contacts_with_name = base.where("contacts.name IS NOT NULL AND BTRIM(contacts.name) <> ''")
     @listable_contacts = contacts_with_identity.or(contacts_with_name)
 
     if params[:type].present?
@@ -411,7 +425,8 @@ class Api::V1::ContactsController < Api::V1::BaseController
   def resolved_contacts
     return @resolved_contacts if @resolved_contacts
 
-    @resolved_contacts = Contact.all.resolved_contacts
+    # EVO-CUSTOM: mesmo escopo por caixa do listable_contacts.
+    @resolved_contacts = accessible_contacts_base.resolved_contacts
 
     @resolved_contacts = @resolved_contacts.where(type: params[:type]) if params[:type].present?
 

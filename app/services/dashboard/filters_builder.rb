@@ -4,10 +4,20 @@ module Dashboard
   class FiltersBuilder
     DEFAULT_RANGE_DAYS = 30
 
+    # EVO-CUSTOM: valor impossivel usado quando o usuario nao tem caixa nenhuma.
+    # Sem a sentinela, um array vazio faria `inbox_id.present?` ser falso e o
+    # filtro NAO seria aplicado — cliente sem caixa veria as metricas de todos.
+    NO_ACCESS_SENTINEL = '00000000-0000-0000-0000-000000000000'
+
     attr_reader :params
 
-    def initialize(account: nil, params:)
+    # EVO-CUSTOM: allowed_inbox_ids nil = sem restricao (admin/service);
+    # array = o usuario so pode enxergar essas caixas. Todos os escopos deste
+    # builder passam pelo metodo privado inbox_id, entao restringir aqui cobre
+    # conversas, mensagens, eventos, pipeline e CSAT de uma vez.
+    def initialize(account: nil, params:, allowed_inbox_ids: nil)
       @params = params
+      @allowed_inbox_ids = allowed_inbox_ids.nil? ? nil : (allowed_inbox_ids.presence || [NO_ACCESS_SENTINEL])
     end
 
     def time_range
@@ -148,8 +158,15 @@ module Dashboard
       params[:team_id].presence
     end
 
+    # EVO-CUSTOM: intersecao entre o filtro pedido e as caixas permitidas.
+    # Pedir uma caixa fora do escopo nao vira erro: cai no proprio escopo
+    # (o cliente nunca ve mais do que as caixas dele).
     def inbox_id
-      params[:inbox_id].presence
+      requested = params[:inbox_id].presence
+      return requested if @allowed_inbox_ids.nil?
+      return @allowed_inbox_ids if requested.blank?
+
+      @allowed_inbox_ids.map(&:to_s).include?(requested.to_s) ? requested : @allowed_inbox_ids
     end
 
     def user_id

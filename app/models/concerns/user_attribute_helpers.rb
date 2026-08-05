@@ -35,8 +35,22 @@ module UserAttributeHelpers
     administrator? ? 'administrator' : 'agent'
   end
 
-  def has_permission?(_permission)
-    true
+  # EVO-CUSTOM: antes era um stub que devolvia `true` incondicionalmente — toda
+  # policy Pundit que consulta has_permission? era decorativa. Passa a ler o
+  # catalogo real (role_permissions_actions, gerido pelo auth-service no mesmo
+  # banco): o MESMO dado que o EvoPermissionConcern ja consulta via API nos
+  # controllers com require_permissions, entao os dois caminhos concordam.
+  #
+  # Admin mantem bypass total (mesma regra do concern). Memoizado por instancia
+  # de User, o que nos controllers equivale a por request.
+  def has_permission?(permission)
+    return true if administrator?
+
+    permission_keys.include?(permission.to_s)
+  end
+
+  def permission_keys
+    @permission_keys ||= RolePermissionAction.where(role_id: role_ids).distinct.pluck(:permission_key)
   end
 
   # Used internally for Evolution in Evolution

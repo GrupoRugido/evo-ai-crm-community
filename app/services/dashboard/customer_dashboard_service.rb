@@ -4,8 +4,10 @@ module Dashboard
   class CustomerDashboardService
     WEEKDAY_LABELS = %w[Dom Seg Ter Qua Qui Sex Sab].freeze
 
-    def initialize(account: nil, params:)
-      @filters = Dashboard::FiltersBuilder.new(params: params)
+    # EVO-CUSTOM: allowed_inbox_ids repassado ao FiltersBuilder — nil = admin
+    # sem restricao; array = metricas restritas as caixas do usuario.
+    def initialize(account: nil, params:, allowed_inbox_ids: nil)
+      @filters = Dashboard::FiltersBuilder.new(params: params, allowed_inbox_ids: allowed_inbox_ids)
     end
 
     def call
