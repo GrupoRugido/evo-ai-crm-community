@@ -91,11 +91,24 @@ class AgentBots::InactivityActionsService
     actions.sort_by { |a| a['minutes'].to_i }
   end
 
+  # EVO-CUSTOM: conta a partir da ultima mensagem que NAO e do bot — ou seja, do
+  # lead (incoming) OU do atendente humano (outgoing com sender_type "User").
+  #
+  # O upstream olhava so a ultima mensagem do lead. Enquanto o unico ator era o
+  # bot isso bastava, mas com a intervencao humana vira problema serio:
+  #
+  #   - "finalizar atendimento" em 3h dispararia mesmo com o atendente tendo
+  #     escrito ha 5 minutos, mandando "atendimento encerrado" por cima dele;
+  #   - "voltar a atender" em 1h tiraria a conversa do humano no meio do trabalho.
+  #
+  # Mensagem do BOT continua nao resetando — comportamento original e correto,
+  # senao a propria cutucada do bot adiaria a proxima acao para sempre.
   def calculate_inactive_time_minutes
-    # Calcula inatividade baseado na última mensagem INCOMING (do cliente)
-    # Ignora mensagens do bot para evitar resetar o timer de inatividade
-    last_incoming_message = @conversation.messages.incoming.order(created_at: :desc).first
-    last_activity = last_incoming_message&.created_at || @conversation.created_at
+    scope = @conversation.messages.reorder(nil)
+    last_lead = scope.incoming.order(created_at: :desc).first
+    last_human_agent = scope.outgoing.where(sender_type: 'User').order(created_at: :desc).first
+
+    last_activity = [last_lead&.created_at, last_human_agent&.created_at, @conversation.created_at].compact.max
 
     time_diff_seconds = Time.current - last_activity
     (time_diff_seconds / 60.0).floor

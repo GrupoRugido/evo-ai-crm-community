@@ -43,6 +43,19 @@ class AgentBotListener < BaseListener
     # Note: Only process moderation for incoming messages (not outgoing bot responses)
     Rails.logger.info "[AgentBot Listener] Moderation check - channel_type: #{inbox.channel_type}, agent_bot_inbox present?: #{agent_bot_inbox.present?}, moderation_enabled?: #{agent_bot_inbox&.moderation_enabled?}, message.incoming?: #{message.incoming?}"
 
+    # EVO-CUSTOM: mensagem do ATENDENTE HUMANO tambem zera a fila de acoes de
+    # inatividade — precisa ficar ANTES do guard de incoming logo abaixo.
+    #
+    # Sem isto, depois que o "voltar a atender" executa uma vez, uma nova
+    # intervencao humana deixa a conversa presa em "open" para sempre: o
+    # find_action_to_execute avanca por last_action_index_for, entao a acao ja
+    # registrada nunca dispararia de novo e a conversa jamais voltaria para a IA.
+    #
+    # Zerar aqui tambem faz o "finalizar atendimento" e o "interagir" recomecarem
+    # a contagem a partir do atendente — que e o comportamento esperado: enquanto
+    # o humano estiver trabalhando, o bot nao encerra nem cutuca por cima dele.
+    reset_inactivity_actions(conversation) if human_agent_message?(message)
+
     # Skip moderation for outgoing messages (messages sent by the bot/page)
     return unless message.incoming?
 
@@ -546,6 +559,13 @@ class AgentBotListener < BaseListener
   end
 
   # Reset inactivity actions when customer responds
+  # EVO-CUSTOM: mensagem de saida enviada por uma PESSOA (pela tela do CRM ou
+  # pelo WhatsApp do proprio numero). Exclui o AgentBot e tambem as mensagens de
+  # automacao, que chegam com sender_type nulo.
+  def human_agent_message?(message)
+    message.outgoing? && message.sender_type == 'User'
+  end
+
   def reset_inactivity_actions(conversation)
     Rails.logger.info "[AgentBot Listener] Resetting inactivity actions for conversation #{conversation.id}"
     InactivityActionExecution.reset_for_conversation(conversation.id)
