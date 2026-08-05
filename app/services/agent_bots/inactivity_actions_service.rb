@@ -307,8 +307,17 @@ class AgentBots::InactivityActionsService
   # cliente que o atendimento continua disponivel.
   # ---------------------------------------------------------------------------
   def execute_reopen_action(action_config, action_index)
+    # Ja esta com a IA: o objetivo desta acao ja esta satisfeito, entao nao ha o
+    # que reabrir nem motivo para avisar o cliente.
+    #
+    # Registra a execucao mesmo assim. find_action_to_execute avanca a fila por
+    # last_action_index_for, que le do InactivityActionExecution -- sair daqui
+    # sem registrar faria esta acao ser reavaliada a cada minuto para sempre e,
+    # pior, travaria qualquer acao configurada DEPOIS dela (um 'finalizar
+    # atendimento' em 4h, por exemplo, nunca dispararia).
     if @conversation.pending?
-      Rails.logger.info "[InactivityActions] Skipping reopen - conversation #{@conversation.id} is already pending"
+      Rails.logger.info "[InactivityActions] Conversation #{@conversation.id} is already pending - nothing to reopen"
+      record_execution(action_config, action_index, 'reopen', nil)
       return
     end
 
