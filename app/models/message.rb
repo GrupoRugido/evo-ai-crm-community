@@ -448,6 +448,14 @@ class Message < ApplicationRecord
   def reopen_resolved_conversation
     # mark resolved bot conversation as pending to be reopened by bot processor service
     if conversation.inbox.active_bot?
+      # EVO-CUSTOM: guarda o trecho que a IA nao viu antes de devolver o
+      # atendimento. Este e o caminho do atendente que finaliza e ENCERRA a
+      # conversa; dias depois o cliente volta a escrever e a IA reassume por
+      # aqui, sem passar pela acao de inatividade. Sem isso ela retoma sem saber
+      # o que foi combinado — o caso classico do horario ja agendado.
+      #
+      # `except: self` porque esta mensagem ja vai ao bot como conteudo principal.
+      AgentBots::MissedContextBuilder.capture(conversation, except: self)
       conversation.pending!
     elsif conversation.inbox.api?
       Current.executed_by = sender if reopened_by_contact?

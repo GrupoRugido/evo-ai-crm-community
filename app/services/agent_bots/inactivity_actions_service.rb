@@ -1,9 +1,4 @@
 class AgentBots::InactivityActionsService
-  # EVO-CUSTOM: teto do trecho guardado para a IA na acao 'reopen'. Existe para
-  # nao estourar o prompt do agente numa conversa longa de atendimento humano.
-  MISSED_CONTEXT_MAX_MESSAGES = 50
-  MISSED_CONTEXT_MAX_CHARS = 4000
-
   def initialize(conversation, agent_bot)
     @conversation = conversation
     @agent_bot = agent_bot
@@ -303,11 +298,13 @@ class AgentBots::InactivityActionsService
   # "pending" quando o atendente responde (e a IA cala); passado o tempo
   # configurado nesta mesma tela, esta acao devolve para "pending" e a IA volta.
   #
-  # Guarda em additional_attributes['pending_ai_context'] o trecho que a IA NAO
-  # viu. A entrega desse contexto nao acontece aqui de proposito: quem injeta e o
-  # BotRuntime::DelegationService, junto com a proxima mensagem real do cliente.
-  # Mandar o contexto agora faria a IA responder sozinha e o cliente receberia uma
-  # mensagem solta -- exatamente o que a retomada silenciosa quer evitar.
+  # O trecho que a IA nao viu e guardado por AgentBots::MissedContextBuilder e
+  # entregue depois, pelo BotRuntime::DelegationService, junto com a proxima
+  # mensagem real do cliente. Entregar agora faria a IA responder sozinha.
+  #
+  # A mensagem de retomada e OPCIONAL: com o campo vazio a conversa so volta para
+  # "pending" em silencio e a IA espera o cliente falar. Com texto, avisa o
+  # cliente que o atendimento continua disponivel.
   # ---------------------------------------------------------------------------
   def execute_reopen_action(action_config, action_index)
     if @conversation.pending?
@@ -318,18 +315,13 @@ class AgentBots::InactivityActionsService
     Rails.logger.info "[InactivityActions] Executing reopen action - returning conversation to the AI"
 
     begin
-      context = build_missed_context
+      AgentBots::MissedContextBuilder.capture(@conversation)
+      @conversation.update!(status: :pending)
 
-      if context.present?
-        attributes = (@conversation.additional_attributes || {}).merge('pending_ai_context' => context)
-        @conversation.update!(additional_attributes: attributes, status: :pending)
-        Rails.logger.info "[InactivityActions] Stored pending_ai_context (#{context.length} chars)"
-      else
-        @conversation.update!(status: :pending)
-        Rails.logger.info '[InactivityActions] No missed context to store'
-      end
+      farewell = action_config['message'].to_s.strip
+      send_reopen_message(farewell, action_index) if farewell.present?
 
-      record_execution(action_config, action_index, 'reopen', nil)
+      record_execution(action_config, action_index, 'reopen', farewell.presence)
 
       Rails.logger.info "[InactivityActions] ✅ Conversation #{@conversation.id} returned to pending"
     rescue StandardError => e
@@ -338,39 +330,25 @@ class AgentBots::InactivityActionsService
     end
   end
 
-  # Tudo que aconteceu depois da ultima fala da IA. E exatamente o que ficou fora
-  # da sessao dela: mensagem de saida nunca invoca o agente (AgentBotListener corta
-  # em `return unless message.incoming?`), e as mensagens de entrada que chegaram
-  # durante o atendimento humano foram puladas porque a conversa nao estava pending.
-  def build_missed_context
-    last_ai_message = @conversation.messages.reorder(nil)
-                                   .where(message_type: :outgoing, sender_type: 'AgentBot')
-                                   .order(created_at: :desc).first
-
-    scope = @conversation.messages.reorder(nil).where.not(message_type: :activity)
-    scope = scope.where('messages.created_at > ?', last_ai_message.created_at) if last_ai_message
-
-    missed = scope.order(created_at: :asc).last(MISSED_CONTEXT_MAX_MESSAGES)
-    return nil if missed.blank?
-
-    lines = missed.filter_map do |message|
-      text = message.content.to_s.strip
-      next if text.blank?
-
-      "#{missed_context_role(message)}: #{text}"
-    end
-    return nil if lines.blank?
-
-    body = lines.join("\n")
-    body = "#{body[0, MISSED_CONTEXT_MAX_CHARS]}..." if body.length > MISSED_CONTEXT_MAX_CHARS
-    body
-  end
-
-  def missed_context_role(message)
-    return 'Cliente' if message.incoming?
-    return 'IA' if message.sender_type == 'AgentBot'
-
-    'Atendente'
+  # Texto fixo, nao gerado pela IA: e um aviso de cortesia ("continuamos por
+  # aqui"), e nao um turno de conversa. Mandar para a IA gerar arriscaria ela
+  # inventar assunto sem o cliente ter perguntado nada.
+  def send_reopen_message(content, action_index)
+    ::Messages::MessageBuilder.new(nil, @conversation, {
+                                     inbox_id: @conversation.inbox_id,
+                                     conversation_id: @conversation.id,
+                                     message_type: :outgoing,
+                                     content: content,
+                                     sender: @agent_bot,
+                                     content_attributes: {
+                                       automation_source: 'inactivity_action_reopen',
+                                       action_index: action_index
+                                     }
+                                   }).perform
+    Rails.logger.info '[InactivityActions] Reopen message sent'
+  rescue StandardError => e
+    # Nao propaga: a conversa ja voltou para pending, que e o efeito principal.
+    Rails.logger.error "[InactivityActions] Error sending reopen message: #{e.message}"
   end
 
   def record_execution(action_config, action_index, action_type, message_sent)
