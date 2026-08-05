@@ -45,6 +45,7 @@ class Api::V1::ContactsController < Api::V1::BaseController
     paginated_response(
       data: ContactSerializer.serialize_collection(@contacts, include_contact_inboxes: @include_contact_inboxes),
       collection: @contacts,
+      pagination_meta: contacts_pagination_meta,
       message: 'Contacts retrieved successfully'
     )
   end
@@ -72,6 +73,7 @@ class Api::V1::ContactsController < Api::V1::BaseController
     paginated_response(
       data: ContactSerializer.serialize_collection(@contacts, include_contact_inboxes: @include_contact_inboxes),
       collection: @contacts,
+      pagination_meta: contacts_pagination_meta,
       message: 'Contacts search completed successfully'
     )
   end
@@ -389,6 +391,31 @@ class Api::V1::ContactsController < Api::V1::BaseController
     # 1 minuto (visto na pratica: cliente com 271 contatos recebia 319).
     # `scope` = "all" para quem ve tudo, ou a lista de caixas do usuario.
     "contacts_count/#{contacts_count_scope_key}/#{key_parts.presence || 'all'}"
+  end
+
+  # EVO-CUSTOM: o total da paginacao vinha de collection.total_count (Kaminari),
+  # que conta LINHAS do join de resolved_contacts — 2.125 para 2.012 contatos
+  # reais. O controller ja calculava @contacts_count corretamente e o descartava.
+  # Aqui ele passa a ser usado, e as demais chaves seguem o mesmo formato que o
+  # api_response_helper monta.
+  def contacts_pagination_meta
+    return nil if @contacts_count.nil?
+
+    page_size = @contacts.respond_to?(:limit_value) ? @contacts.limit_value.to_i : 0
+    page_size = (params[:pageSize] || params[:page_size] || params[:per_page] || 20).to_i if page_size.zero?
+    page_size = [page_size, 1].max
+
+    current_page = @contacts.respond_to?(:current_page) ? @contacts.current_page : (params[:page] || 1).to_i
+    total_pages = (@contacts_count.to_f / page_size).ceil
+
+    {
+      page: current_page,
+      page_size: page_size,
+      total: @contacts_count,
+      total_pages: total_pages,
+      has_next_page: current_page < total_pages,
+      has_previous_page: current_page > 1
+    }
   end
 
   def contacts_count_scope_key
