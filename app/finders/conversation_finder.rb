@@ -158,7 +158,12 @@ class ConversationFinder
     # sees only those. Using the raw `inboxes` relation here returned [] for any
     # user without an inbox_member — collapsing the list to "no conversations"
     # even for the account admin (the 0/74 bug).
-    query.where(inbox: @current_user.assigned_inboxes)
+    # EVO-CUSTOM: alem da caixa, o quanto da fila. Sem esta linha o index era o
+    # unico caminho sem a restricao por dono — medido: atendente com
+    # "apenas as minhas" recebia a fila inteira da caixa.
+    Conversations::VisibilityScope.apply(
+      query.where(inbox: @current_user.assigned_inboxes), @current_user
+    )
   end
 
   def apply_status_filter(query)

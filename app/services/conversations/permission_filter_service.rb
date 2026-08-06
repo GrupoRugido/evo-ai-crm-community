@@ -32,29 +32,11 @@ class Conversations::PermissionFilterService
     aplicar_visibilidade(conversations.where(inbox: accessible))
   end
 
-  # EVO-CUSTOM: o "so o que e meu" passa a RESTRINGIR, nao so contar.
-  #
-  # A interface ja mostrava mine_count / unassigned_count / all_count, mas eram
-  # filtros que a propria pessoa escolhia — nada impedia o atendente de clicar
-  # em "todas" e ler a fila inteira da clinica. Quem decide agora e o vinculo
-  # dela com o cliente (workspace_members.conversation_visibility), que so o
-  # gestor ou o super admin editam.
-  #
-  # O escopo por caixa continua sendo a primeira barreira; isto aperta dentro
-  # dela.
+  # EVO-CUSTOM: o "so o que e meu" passa a RESTRINGIR, nao so contar. A regra em
+  # si vive no VisibilityScope, porque o ConversationFinder (o index) precisa da
+  # mesma e nao passa por aqui.
   def aplicar_visibilidade(escopo)
-    return escopo unless user.respond_to?(:conversation_visibility_for)
-
-    case user.conversation_visibility_for(Current.workspace_id)
-    when 'apenas_minhas'
-      escopo.where(assignee_id: user.id)
-    when 'fila'
-      # Sem dono + as minhas: e o que faz uma fila funcionar, porque a pessoa
-      # precisa enxergar o que ainda nao foi pego para poder pegar.
-      escopo.where('conversations.assignee_id IS NULL OR conversations.assignee_id = ?', user.id)
-    else
-      escopo
-    end
+    Conversations::VisibilityScope.apply(escopo, user)
   end
 
   def unrestricted?

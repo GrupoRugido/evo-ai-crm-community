@@ -56,4 +56,34 @@ RSpec.describe Conversations::PermissionFilterService do
 
     expect(visiveis_para(gestora.reload)).to match_array([minha.id, do_bruno.id, sem_dono.id])
   end
+
+  # O index NAO passa pelo PermissionFilterService: ele tem o proprio filtro no
+  # ConversationFinder. Aplicar a visibilidade so no service deixou o index
+  # vazando — medido no dev, 100 conversas devolvidas para quem devia ver 7.
+  describe 'pelo ConversationFinder, que e o caminho do index' do
+    def pelo_finder(pessoa)
+      ConversationFinder.new(pessoa, { status: 'all' }).perform
+    end
+
+    it 'restringe a lista, e nao so o service' do
+      WorkspaceMember.create!(user: ana, workspace: ws, conversation_visibility: 'apenas_minhas')
+
+      expect(pelo_finder(ana.reload)[:conversations].pluck(:id)).to eq([minha.id])
+    end
+
+    it 'restringe tambem os contadores, para a tela nao mostrar um numero que a lista nao entrega' do
+      WorkspaceMember.create!(user: ana, workspace: ws, conversation_visibility: 'apenas_minhas')
+
+      contagens = pelo_finder(ana.reload)[:count]
+      expect(contagens[:all_count]).to eq(1)
+      expect(contagens[:unassigned_count]).to eq(0)
+    end
+
+    it 'fila: conta o sem dono junto com as minhas' do
+      WorkspaceMember.create!(user: ana, workspace: ws, conversation_visibility: 'fila')
+
+      contagens = pelo_finder(ana.reload)[:count]
+      expect(contagens[:all_count]).to eq(2)
+    end
+  end
 end
