@@ -56,10 +56,20 @@ class Api::V1::WorkspacesController < Api::V1::BaseController
     error_response(ApiErrorCodes::FORBIDDEN, 'Only administrators can change a workspace', status: :forbidden)
   end
 
+  # EVO-CUSTOM: quem PERTENCE a um workspace so enxerga o proprio — a checagem
+  # vem antes de qualquer coisa.
+  #
+  # Achado no QA: o atendente de um cliente tem a permissao conversations.read_all
+  # (herdada do papel `agent` do upstream), o que ligava evo_can_read_all_inboxes
+  # e o fazia passar por "admin" aqui. Resultado: ele via os NOMES das outras
+  # clinicas no seletor. Pertencer a um workspace e o sinal mais forte e tem
+  # prioridade sobre qualquer permissao ampla.
   def visible_workspaces
+    proprio = current_user&.workspace_id
+    return Workspace.active.where(id: proprio).order(:name) if proprio.present?
     return Workspace.active.order(:name) if admin_like?
 
-    Workspace.active.where(id: current_user&.workspace_id).order(:name)
+    Workspace.none
   end
 
   def admin_like?
