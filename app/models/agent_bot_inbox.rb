@@ -46,6 +46,7 @@ class AgentBotInbox < ApplicationRecord
   validate :validate_allowed_label_ids
   validate :validate_ignored_label_ids
   validate :validate_facebook_interaction_type
+  validate :validate_same_workspace
   before_validation :set_default_configurations
 
   belongs_to :inbox
@@ -283,5 +284,23 @@ class AgentBotInbox < ApplicationRecord
     unless VALID_FACEBOOK_INTERACTION_TYPES.include?(facebook_interaction_type)
       errors.add(:facebook_interaction_type, "must be one of: #{VALID_FACEBOOK_INTERACTION_TYPES.join(', ')}")
     end
+  end
+
+  # EVO-CUSTOM: impede ligar o agente de um cliente na caixa de outro.
+  #
+  # Sem isto o vinculo salva sem reclamar e a proxima mensagem do paciente vai
+  # direto para o agente da clinica errada — medido: mensagem da Cicatriclinic
+  # entregue ao agente do Oral Riso.
+  #
+  # Agente sem workspace (nil) continua podendo entrar em qualquer caixa: e o
+  # caso dos nossos agentes compartilhados e o que mantem a retrocompatibilidade
+  # com a instalacao de cliente unico.
+  def validate_same_workspace
+    return unless agent_bot.respond_to?(:workspace_id)
+    return if agent_bot&.workspace_id.blank?
+    return if inbox&.workspace_id.blank?
+    return if agent_bot.workspace_id == inbox.workspace_id
+
+    errors.add(:agent_bot_id, 'pertence a outro workspace e nao pode atender esta caixa')
   end
 end
