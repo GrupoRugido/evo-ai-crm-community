@@ -9,8 +9,8 @@ class Api::V1::Evolution::AuthorizationsController < Api::V1::BaseController
     # Parâmetros vêm dentro de authorization
     auth_params = params[:authorization] || params
 
-    api_url = auth_params[:api_url].presence || GlobalConfigService.load('EVOLUTION_API_URL', '').to_s.strip
-    admin_token = auth_params[:admin_token].presence || GlobalConfigService.load('EVOLUTION_ADMIN_SECRET', '').to_s.strip
+    api_url = auth_params[:api_url].presence || EvolutionEndpoint.api_url.to_s
+    admin_token = auth_params[:admin_token].presence || EvolutionEndpoint.admin_token.to_s
     instance_name = auth_params[:instance_name]
     phone_number = auth_params[:phone_number]
 

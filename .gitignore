@@ -100,3 +100,4 @@ _evo/
 _evo-output/
 _bmad/
 _bmad-output/
+.claude/settings.json

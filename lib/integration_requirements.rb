@@ -24,8 +24,16 @@ module IntegrationRequirements
     keys = required_keys(config_type)
     return false if keys.empty?
 
-    keys.all? do |key|
-      GlobalConfigService.load(key, nil).to_s.strip != ''
-    end
+    keys.all? { |key| effective_value(key).present? }
+  end
+
+  # EVO-CUSTOM: ENV antes do banco.
+  #
+  # A Evolution da instalacao passou a viver no compose para sobreviver ao
+  # restore do dump no corte — o que estivesse so em installation_configs
+  # voltaria ao valor do dump de producao. Vale para toda integracao, nao so a
+  # Evolution: quem declara no ambiente esta declarando a instalacao.
+  def self.effective_value(key)
+    ENV.fetch(key, nil).presence&.strip || GlobalConfigService.load(key, nil).to_s.strip.presence
   end
 end
