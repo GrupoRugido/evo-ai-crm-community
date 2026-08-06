@@ -9,17 +9,21 @@ module EvolutionConcern
   #
   # Accepts optional raw_params to check request params before GlobalConfig
   # (used in create actions where the channel may not exist yet).
+  # EVO-CUSTOM: a Evolution da instalacao (EvolutionEndpoint) entra no lugar do
+  # GlobalConfigService direto — ela le ENV antes do banco, para sobreviver ao
+  # restore do dump. O que o canal guarda continua vencendo: os canais antigos
+  # tem api_url proprio e nao podem mudar de servidor por causa desta troca.
   def evolution_api_url_for(channel, raw_params = {})
     url = channel&.provider_config&.dig('api_url').presence ||
           raw_params[:api_url].presence ||
-          GlobalConfigService.load('EVOLUTION_API_URL', '').to_s.strip
+          EvolutionEndpoint.api_url
     url.presence
   end
 
   def evolution_admin_token_for(channel, raw_params = {})
     token = channel&.provider_config&.dig('admin_token').presence ||
             raw_params[:api_hash].presence ||
-            GlobalConfigService.load('EVOLUTION_ADMIN_SECRET', '').to_s.strip
+            EvolutionEndpoint.admin_token
     token.presence
   end
 

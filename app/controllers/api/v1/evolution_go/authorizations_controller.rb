@@ -244,8 +244,8 @@ class Api::V1::EvolutionGo::AuthorizationsController < Api::V1::BaseController
     # Parâmetros vêm dentro de authorization ou como query params
     auth_params = params[:authorization] || params
 
-    @api_url = auth_params[:api_url].presence || GlobalConfigService.load('EVOLUTION_GO_API_URL', '').to_s.strip
-    @admin_token = auth_params[:admin_token].presence || GlobalConfigService.load('EVOLUTION_GO_ADMIN_SECRET', '').to_s.strip
+    @api_url = auth_params[:api_url].presence || EvolutionEndpoint.go_api_url.to_s
+    @admin_token = auth_params[:admin_token].presence || EvolutionEndpoint.go_admin_token.to_s
     @instance_name = auth_params[:instance_name] || params[:instanceName] || params[:instanceId]
     @instance_uuid = auth_params[:instance_uuid] || params[:instanceName] || params[:instanceId]
     @instance_token = auth_params[:instance_token]

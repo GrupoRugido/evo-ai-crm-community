@@ -67,8 +67,8 @@ module EvolutionGoConcern
     config = whatsapp_channel&.provider_config || {}
 
     creds = {
-      api_url: config['api_url'].presence || GlobalConfigService.load('EVOLUTION_GO_API_URL', '').to_s.strip,
-      admin_token: config['admin_token'].presence || GlobalConfigService.load('EVOLUTION_GO_ADMIN_SECRET', '').to_s.strip,
+      api_url: config['api_url'].presence || EvolutionEndpoint.go_api_url.to_s,
+      admin_token: config['admin_token'].presence || EvolutionEndpoint.go_admin_token.to_s,
       instance_token: config['instance_token'],
       instance_uuid: config['instance_uuid'],
       instance_name: config['instance_name']
@@ -89,8 +89,8 @@ module EvolutionGoConcern
   # row) — used by privacy/profile/settings #set_instance_params else branches.
   def evolution_go_credentials_from_params(api_url_param, admin_token_param)
     {
-      api_url: api_url_param.presence || GlobalConfigService.load('EVOLUTION_GO_API_URL', '').to_s.strip,
-      admin_token: admin_token_param.presence || GlobalConfigService.load('EVOLUTION_GO_ADMIN_SECRET', '').to_s.strip
+      api_url: api_url_param.presence || EvolutionEndpoint.go_api_url.to_s,
+      admin_token: admin_token_param.presence || EvolutionEndpoint.go_admin_token.to_s
     }
   end
 end

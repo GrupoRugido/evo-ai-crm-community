@@ -6,7 +6,7 @@ class Api::V1::Evolution::HealthController < Api::V1::BaseController
   TIMEOUT_SECONDS = 5
 
   def show
-    api_url = params[:api_url].presence || GlobalConfigService.load('EVOLUTION_API_URL', '').to_s.strip
+    api_url = params[:api_url].presence || EvolutionEndpoint.api_url.to_s
 
     if api_url.blank?
       render json: { error: 'api_url is required. Provide it in the request or configure EVOLUTION_API_URL globally.' }, status: :bad_request
