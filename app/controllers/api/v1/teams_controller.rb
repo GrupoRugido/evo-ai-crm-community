@@ -14,8 +14,10 @@ class Api::V1::TeamsController < Api::V1::BaseController
   before_action :validate_team_limit, only: [:create]
 
   def index
-    @teams = Team.all
-    
+    # EVO-CUSTOM: sem isto o cliente de uma clinica lista os times da outra —
+    # o papel Cliente tem teams.read e o Team.all nao filtrava nada.
+    @teams = workspace_scope_strict(Team.all)
+
     apply_pagination
     
     paginated_response(
@@ -33,8 +35,11 @@ class Api::V1::TeamsController < Api::V1::BaseController
   end
 
   def create
-    @team = Team.new(team_params)
-    
+    # EVO-CUSTOM: time nasce no workspace ativo. Sem isto o time criado pelo
+    # cliente sairia global e apareceria para todo mundo.
+    @team = Team.new(team_params.merge(workspace_id: Current.workspace_id))
+
+
     if @team.save
       success_response(
         data: TeamSerializer.serialize(@team, current_user_id: Current.user.id),
@@ -78,7 +83,9 @@ class Api::V1::TeamsController < Api::V1::BaseController
   private
 
   def fetch_team
-    @team = Team.find(params[:id])
+    # EVO-CUSTOM: mesmo escopo do index. Esconder da lista nao basta — foi
+    # exatamente o que aconteceu com os funis: a URL direta abria o do vizinho.
+    @team = workspace_scope_strict(Team.all).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     error_response(
       ApiErrorCodes::TEAM_NOT_FOUND,
