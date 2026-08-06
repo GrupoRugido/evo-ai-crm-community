@@ -39,9 +39,15 @@ class AutomationRule < ApplicationRecord
   scope :simple_mode, -> { where(mode: 'simple') }
   scope :flow_mode, -> { where(mode: 'flow') }
 
+  # EVO-CUSTOM: sender_type entra aqui TAMBEM. Sao duas listas independentes:
+  # esta (validacao do model, json_conditions_format) e o lib/filters/filter_keys.yml
+  # (usado pelo ConditionValidationService e pelo FilterService na hora de casar).
+  # Adicionar so no YAML faz a condicao aparecer na tela e a regra falhar ao salvar
+  # com "Automation conditions sender_type not supported."
   def conditions_attributes
     %w[content email country_code status message_type browser_language assignee_id team_id referer city company inbox_id
-       mail_subject phone_number priority conversation_language pipeline_id pipeline_stage_id labels name identifier blocked]
+       mail_subject phone_number priority conversation_language pipeline_id pipeline_stage_id labels name identifier blocked
+       sender_type]
   end
 
   def actions_attributes
