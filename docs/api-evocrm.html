@@ -1,0 +1,1683 @@
+<title>API do EvoCRM — referência para scripts e agentes</title>
+
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --bg:      #FCFBF8;
+    --panel:   #FFFFFF;
+    --panel-2: #F4F2EC;
+    --ink:     #16191F;
+    --dim:     #616875;
+    --rule:    #E4E0D6;
+    --accent:  #A66A1F;
+    --accent-soft: #F5EAD8;
+
+    --get:   #2F7A6E;
+    --post:  #3C63A8;
+    --patch: #8C6A18;
+    --del:   #A94848;
+    --alerta:#A94848;
+    --ok:    #3F7A46;
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    --passo-1: 0.78rem;
+    --passo0:  0.94rem;
+    --passo1:  1.06rem;
+    --passo2:  1.35rem;
+    --passo3:  1.9rem;
+    --passo4:  2.6rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #101318;
+      --panel:   #171B22;
+      --panel-2: #1C212A;
+      --ink:     #E6E9EF;
+      --dim:     #939BAA;
+      --rule:    #262C38;
+      --accent:  #C08A3E;
+      --accent-soft: #241C10;
+
+      --get:   #4E9B8F;
+      --post:  #6F92CE;
+      --patch: #C08A3E;
+      --del:   #C97070;
+      --alerta:#C97070;
+      --ok:    #6BA671;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:      #101318;
+    --panel:   #171B22;
+    --panel-2: #1C212A;
+    --ink:     #E6E9EF;
+    --dim:     #939BAA;
+    --rule:    #262C38;
+    --accent:  #C08A3E;
+    --accent-soft: #241C10;
+    --get:   #4E9B8F;
+    --post:  #6F92CE;
+    --patch: #C08A3E;
+    --del:   #C97070;
+    --alerta:#C97070;
+    --ok:    #6BA671;
+  }
+
+  :root[data-theme="light"] {
+    --bg:      #FCFBF8;
+    --panel:   #FFFFFF;
+    --panel-2: #F4F2EC;
+    --ink:     #16191F;
+    --dim:     #616875;
+    --rule:    #E4E0D6;
+    --accent:  #A66A1F;
+    --accent-soft: #F5EAD8;
+    --get:   #2F7A6E;
+    --post:  #3C63A8;
+    --patch: #8C6A18;
+    --del:   #A94848;
+    --alerta:#A94848;
+    --ok:    #3F7A46;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--passo0);
+    line-height: 1.62;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible, details:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+  }
+
+  code, pre, .v, .mono { font-family: var(--mono); font-variant-ligatures: none; }
+
+  /* ---------- estrutura ---------- */
+
+  .casca {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+
+  .nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2.2rem 1.4rem 3rem 1.6rem;
+    border-right: 1px solid var(--rule);
+  }
+
+  .marca {
+    font-family: var(--mono);
+    font-size: var(--passo1);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.15rem;
+  }
+  .marca span { color: var(--accent); }
+  .marca-sub {
+    font-size: var(--passo-1);
+    color: var(--dim);
+    margin: 0 0 1.8rem;
+    line-height: 1.4;
+  }
+
+  .nav-grupo { margin-bottom: 1.5rem; }
+  .nav-titulo {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--dim);
+    margin: 0 0 0.55rem;
+  }
+  .nav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.24rem; }
+  .nav ol a {
+    display: block;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: var(--passo-1);
+    padding: 0.16rem 0;
+    border-left: 2px solid transparent;
+    padding-left: 0.7rem;
+    margin-left: -0.7rem;
+  }
+  .nav ol a:hover { color: var(--accent); border-left-color: var(--accent); }
+
+  main { padding: 2.6rem 2.6rem 6rem; min-width: 0; }
+
+  /* ---------- tipografia ---------- */
+
+  .cabeca { border-bottom: 1px solid var(--rule); padding-bottom: 2rem; margin-bottom: 2.6rem; }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: var(--passo4);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0 0 0.7rem;
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: var(--passo3);
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 3.4rem 0 0.5rem;
+    scroll-margin-top: 1.5rem;
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  h3 {
+    font-family: var(--mono);
+    font-size: var(--passo2);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 2.3rem 0 0.4rem;
+    scroll-margin-top: 1.5rem;
+  }
+
+  h4 {
+    font-family: var(--mono);
+    font-size: var(--passo1);
+    font-weight: 700;
+    margin: 1.6rem 0 0.35rem;
+  }
+
+  p, li { max-width: 68ch; }
+  p { margin: 0 0 0.95rem; }
+
+  .lede { font-size: var(--passo1); color: var(--dim); max-width: 62ch; }
+
+  .olho {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--accent);
+    margin: 0 0 0.5rem;
+  }
+
+  ul, ol.num { padding-left: 1.15rem; margin: 0 0 1rem; }
+  li { margin-bottom: 0.32rem; }
+
+  strong { font-weight: 650; }
+
+  /* ---------- código ---------- */
+
+  pre {
+    background: var(--panel-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.95rem 1.05rem;
+    overflow-x: auto;
+    font-size: var(--passo-1);
+    line-height: 1.55;
+    margin: 0 0 1.15rem;
+  }
+  pre code { background: none; padding: 0; border: none; font-size: inherit; }
+
+  :not(pre) > code {
+    background: var(--panel-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.05em 0.34em;
+    font-size: 0.88em;
+  }
+
+  .c-cmt { color: var(--dim); }
+  .c-chv { color: var(--accent); }
+  .c-str { color: var(--get); }
+
+  /* ---------- verbos ---------- */
+
+  .v {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.1rem 0.42rem;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    min-width: 3.9rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .v.get   { color: var(--get); }
+  .v.post  { color: var(--post); }
+  .v.patch { color: var(--patch); }
+  .v.del   { color: var(--del); }
+
+  /* ---------- blocos ---------- */
+
+  .caixa {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.15rem 1.3rem;
+    margin: 0 0 1.4rem;
+  }
+  .caixa > :last-child { margin-bottom: 0; }
+  .caixa p, .caixa li { max-width: none; }
+
+  .armadilha {
+    border-left: 3px solid var(--alerta);
+    background: var(--panel);
+    border-radius: 0 3px 3px 0;
+    padding: 1rem 1.25rem;
+    margin: 0 0 1rem;
+  }
+  .armadilha > :last-child { margin-bottom: 0; }
+  .armadilha h4 { margin-top: 0; color: var(--alerta); font-size: var(--passo0); }
+  .armadilha p, .armadilha li { max-width: none; }
+
+  .nota {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 3px 3px 0;
+    padding: 0.9rem 1.2rem;
+    margin: 0 0 1.3rem;
+  }
+  .nota > :last-child { margin-bottom: 0; }
+  .nota p { max-width: none; }
+
+  /* ---------- tabelas ---------- */
+
+  .tab-rolo { overflow-x: auto; margin: 0 0 1.4rem; border: 1px solid var(--rule); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; font-size: var(--passo-1); }
+  th, td {
+    text-align: left;
+    padding: 0.52rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dim);
+    font-weight: 600;
+    background: var(--panel-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+  .num-col { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* ---------- índice de endpoints ---------- */
+
+  .fam {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    margin-bottom: 0.4rem;
+    background: var(--panel);
+  }
+  .fam summary {
+    cursor: pointer;
+    padding: 0.55rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--mono);
+    font-size: var(--passo-1);
+    list-style: none;
+  }
+  .fam summary::-webkit-details-marker { display: none; }
+  .fam summary::before {
+    content: "+";
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 0.55rem;
+  }
+  .fam[open] summary::before { content: "–"; }
+  .fam-nome { flex: 1; }
+  .fam-n {
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.75rem;
+  }
+  .fam-corpo { border-top: 1px solid var(--rule); padding: 0.5rem 0.9rem 0.7rem; overflow-x: auto; }
+  .ep {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.16rem 0;
+    font-size: var(--passo-1);
+    white-space: nowrap;
+  }
+  .ep code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ink);
+    font-size: 0.82rem;
+  }
+
+  /* ---------- rodapé ---------- */
+
+  .rodape {
+    margin-top: 4rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--rule);
+    color: var(--dim);
+    font-size: var(--passo-1);
+  }
+  .rodape p { max-width: 68ch; }
+
+  /* ---------- responsivo ---------- */
+
+  @media (max-width: 900px) {
+    .casca { grid-template-columns: 1fr; }
+    .nav {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 1.6rem 1.4rem;
+    }
+    .nav ol { flex-direction: row; flex-wrap: wrap; gap: 0.3rem 1rem; }
+    .nav-grupo { margin-bottom: 1rem; }
+    main { padding: 1.8rem 1.4rem 4rem; }
+    h1 { font-size: var(--passo3); }
+    h2 { font-size: var(--passo2); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="casca">
+
+  <nav class="nav" aria-label="Sumário">
+    <p class="marca">evocrm<span>/api</span></p>
+    <p class="marca-sub">Referência verificada contra o comportamento real da instalação do Grupo Rugido.</p>
+
+    <div class="nav-grupo">
+      <p class="nav-titulo">Fundamentos</p>
+      <ol>
+        <li><a href="#base">Endereços e versão</a></li>
+        <li><a href="#auth">Autenticação</a></li>
+        <li><a href="#envelope">Envelope de resposta</a></li>
+        <li><a href="#workspaces">Workspaces</a></li>
+      </ol>
+    </div>
+
+    <div class="nav-grupo">
+      <p class="nav-titulo">Receitas</p>
+      <ol>
+        <li><a href="#r-cliente">Cadastrar cliente</a></li>
+        <li><a href="#r-whatsapp">Canal WhatsApp oficial</a></li>
+        <li><a href="#r-canal-api">Canal de API</a></li>
+        <li><a href="#r-agente">Agente de IA</a></li>
+        <li><a href="#r-automacao">Automação</a></li>
+        <li><a href="#r-conversa">Movimentar conversa</a></li>
+        <li><a href="#r-funil">Movimentar funil</a></li>
+        <li><a href="#r-contato">Contatos</a></li>
+      </ol>
+    </div>
+
+    <div class="nav-grupo">
+      <p class="nav-titulo">Referência</p>
+      <ol>
+        <li><a href="#armadilhas">Armadilhas</a></li>
+        <li><a href="#indice">Índice de endpoints</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <main>
+
+    <header class="cabeca">
+      <p class="olho">Grupo Rugido · atualizado em 6 de agosto de 2026</p>
+      <h1>API do EvoCRM</h1>
+      <p class="lede">
+        Referência de uso para quem opera o CRM por script — inclusive agentes de IA com
+        a chave de API. Cada exemplo desta página foi executado contra a instalação real
+        antes de ser escrito; o que está aqui é o que a API de fato responde, não o que
+        deveria responder.
+      </p>
+    </header>
+
+    <h2 id="base">Endereços e versão</h2>
+
+    <p>
+      Duas instalações, mesma API. A de desenvolvimento existe para você errar à vontade —
+      ela não fala com o WhatsApp de ninguém.
+    </p>
+
+    <div class="tab-rolo">
+      <table>
+        <thead>
+          <tr><th>Ambiente</th><th>Base</th><th>Uso</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Produção</td>
+            <td><code>https://evocrm-api.gruporugido.com/api/v1</code></td>
+            <td>Atendimento real das clínicas.</td>
+          </tr>
+          <tr>
+            <td>Desenvolvimento</td>
+            <td><code>https://evocrm-api-dev.rugido.com/api/v1</code></td>
+            <td>Canais desarmados, nenhuma instância de WhatsApp conectada. Teste aqui primeiro.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Há também um caminho público, <code>/public/api/v1</code>, que não pede autenticação e serve
+      para o widget de chat e para canais do tipo API receberem mensagens de fora.
+      Ele é tratado na seção do <a href="#r-canal-api">canal de API</a>.
+    </p>
+
+    <h2 id="auth">Autenticação</h2>
+
+    <p>
+      Três formas, avaliadas nesta ordem: token de serviço, <code>Authorization: Bearer</code> e
+      <code>api_access_token</code>. Para script e agente de IA, use a terceira — as outras duas
+      expiram.
+    </p>
+
+    <h3>A chave de API</h3>
+
+    <p>
+      A chave é um registro em <code>access_tokens</code> que pertence a <strong>um usuário</strong>.
+      Isso não é detalhe de implementação: é o que define tudo que a chave pode fazer. Ela herda
+      o papel do usuário e, se ele pertencer a um cliente, herda o workspace dele também.
+    </p>
+
+    <pre><code><span class="c-cmt"># toda chamada leva este cabeçalho</span>
+curl https://evocrm-api.gruporugido.com/api/v1/workspaces \
+  -H <span class="c-str">"api_access_token: 3f611fbe7258ce52018a2e4fa666dded…"</span></code></pre>
+
+    <p>
+      Sem cabeçalho nenhum a resposta é <code>401</code>. Com uma chave válida mas sem a permissão
+      da ação, é <code>403</code> — a mensagem diz qual das duas coisas faltou.
+    </p>
+
+    <h3>Emitir uma chave</h3>
+
+    <p>
+      O CRM não expõe endpoint para criar chave: a emissão vive no serviço de autenticação. Hoje,
+      na prática, quem provisiona cria o registro direto. Dois campos são obrigatórios e o segundo
+      costuma ser esquecido:
+    </p>
+
+    <pre><code>AgentBot <span class="c-cmt"># (no container do CRM, via rails runner)</span>
+AccessToken.create!(
+  owner: User.find_by(email: <span class="c-str">'operador@cliente.com'</span>),
+  name:  <span class="c-str">'claude-code-provisionamento'</span>,   <span class="c-cmt"># NOT NULL</span>
+  token: SecureRandom.hex(32),           <span class="c-cmt"># NOT NULL na validação</span>
+  scopes: []
+)</code></pre>
+
+    <div class="armadilha">
+      <h4>O token não se gera sozinho</h4>
+      <p>
+        O modelo tem <code>before_create :generate_token</code>, mas a validação
+        <code>validates :token, presence: true</code> roda <em>antes</em> do callback. Criar sem
+        passar <code>token:</code> estoura <code>Token can't be blank</code>. E sem
+        <code>name:</code> estoura no banco, com <code>NotNullViolation</code>.
+      </p>
+    </div>
+
+    <h3>Login com usuário e senha</h3>
+
+    <p>
+      Para uso interativo, <code>POST /auth/login</code> devolve um JWT de 8 horas em
+      <code>data.token.access_token</code>, que vai em <code>Authorization: Bearer</code>.
+      Serve para explorar; não serve para automação que roda sozinha.
+    </p>
+
+    <h2 id="envelope">Envelope de resposta</h2>
+
+    <p>Toda resposta da <code>/api/v1</code> vem embrulhada. Sucesso:</p>
+
+    <pre><code>{
+  <span class="c-chv">"success"</span>: true,
+  <span class="c-chv">"data"</span>: { <span class="c-cmt">/* o recurso, ou uma lista */</span> },
+  <span class="c-chv">"meta"</span>: { <span class="c-chv">"timestamp"</span>: <span class="c-str">"2026-08-06T13:20:52Z"</span> },
+  <span class="c-chv">"message"</span>: <span class="c-str">"Agent bot configured successfully"</span>
+}</code></pre>
+
+    <p>Erro de validação — repare que os detalhes vêm por campo, prontos para o agente corrigir e repetir:</p>
+
+    <pre><code>{
+  <span class="c-chv">"success"</span>: false,
+  <span class="c-chv">"error"</span>: {
+    <span class="c-chv">"code"</span>: <span class="c-str">"VALIDATION_ERROR"</span>,
+    <span class="c-chv">"message"</span>: <span class="c-str">"Validation failed"</span>,
+    <span class="c-chv">"details"</span>: [{
+      <span class="c-chv">"field"</span>: <span class="c-str">"agent_bot_id"</span>,
+      <span class="c-chv">"messages"</span>: [<span class="c-str">"pertence a outro workspace e nao pode atender esta caixa"</span>]
+    }]
+  },
+  <span class="c-chv">"meta"</span>: { <span class="c-chv">"path"</span>: <span class="c-str">"/api/v1/inboxes/…/set_agent_bot"</span>, <span class="c-chv">"method"</span>: <span class="c-str">"POST"</span> }
+}</code></pre>
+
+    <div class="tab-rolo">
+      <table>
+        <thead><tr><th>Código</th><th>Quando</th><th>O que fazer</th></tr></thead>
+        <tbody>
+          <tr><td><code>401</code></td><td>Sem chave, ou chave inválida</td><td>Confira o cabeçalho <code>api_access_token</code>.</td></tr>
+          <tr><td><code>403</code></td><td>Chave válida, papel sem a permissão</td><td>A ação exige outro papel. Não insista com outra rota.</td></tr>
+          <tr><td><code>404</code></td><td>Não existe <em>ou</em> é de outro workspace</td><td>Os dois casos respondem igual, de propósito.</td></tr>
+          <tr><td><code>422</code></td><td>Validação</td><td>Leia <code>error.details</code>; o campo culpado vem nomeado.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Paginação em listas: <code>page</code> e <code>pageSize</code> na query (padrão 20), com o total
+      em <code>meta.pagination.total</code>. <code>page_size</code> e <code>per_page</code> também
+      são aceitos.
+    </p>
+
+    <h2 id="workspaces">Workspaces</h2>
+
+    <p>
+      Cada cliente do Grupo Rugido é um <strong>workspace</strong>. Canais, contatos, agentes,
+      automações, funis, etiquetas, respostas rápidas e times pertencem a um — ou a nenhum, e aí
+      são globais, nossos, visíveis para todos.
+    </p>
+
+    <p>Em toda chamada existe um workspace ativo, resolvido nesta ordem:</p>
+
+    <ol class="num">
+      <li>
+        <strong>A chave é de um usuário de cliente</strong> → o workspace é o dele, e ponto.
+        Cabeçalho e corpo são ignorados.
+      </li>
+      <li>
+        <strong>A chave é de um admin</strong> → vale <code>workspace_id</code> no corpo; na falta
+        dele, o cabeçalho <code>X-Workspace-Id</code>; na falta dos dois, nenhum — o recurso nasce
+        global.
+      </li>
+    </ol>
+
+    <div class="nota">
+      <p>
+        <strong>A chave do cliente não sai do cliente.</strong> Verificado: uma chave do Oral Riso
+        mandou <code>X-Workspace-Id</code> <em>e</em> <code>workspace_id</code> apontando para a
+        Cicatriclinic, e o registro caiu no Oral Riso assim mesmo. É a garantia que sustenta entregar
+        chave para colaborador ou agente que atende um cliente só.
+      </p>
+    </div>
+
+    <h3>Endpoints</h3>
+
+    <pre><code><span class="c-cmt"># os workspaces que esta chave enxerga</span>
+<span class="c-cmt"># admin: todos · cliente: só o dele</span>
+GET  /api/v1/workspaces
+
+<span class="c-cmt"># o workspace ativo desta requisição</span>
+GET  /api/v1/workspaces/current
+
+POST  /api/v1/workspaces          <span class="c-cmt"># só admin</span>
+PATCH /api/v1/workspaces/:id      <span class="c-cmt"># só admin</span></code></pre>
+
+    <h2 id="r-cliente">Receita · cadastrar um cliente</h2>
+
+    <p>
+      O primeiro passo de qualquer provisionamento. O <code>slug</code> é derivado do nome quando
+      omitido.
+    </p>
+
+    <pre><code>curl -X POST https://evocrm-api.gruporugido.com/api/v1/workspaces \
+  -H <span class="c-str">"api_access_token: $CHAVE"</span> \
+  -H <span class="c-str">"Content-Type: application/json"</span> \
+  -d <span class="c-str">'{
+    "name": "Clínica Nova",
+    "logo_url": "https://…/logo.png"
+  }'</span>
+
+<span class="c-cmt"># → 201  data: { "id": "cc42aa2b-…", "slug": "clinica-nova" }</span></code></pre>
+
+    <p>
+      Guarde o <code>id</code>: ele é o <code>workspace_id</code> de tudo que você criar em seguida.
+    </p>
+
+    <h2 id="r-whatsapp">Receita · canal de WhatsApp oficial</h2>
+
+    <p>
+      Este é o caso que só existe por API: a interface não conecta WhatsApp oficial sem o SDK de um
+      aplicativo Tech Provider. Pela API, funciona.
+    </p>
+
+    <pre><code>curl -X POST https://evocrm-api.gruporugido.com/api/v1/inboxes \
+  -H <span class="c-str">"api_access_token: $CHAVE"</span> \
+  -H <span class="c-str">"Content-Type: application/json"</span> \
+  -d <span class="c-str">'{
+    "name": "Clínica Nova — WhatsApp",
+    "workspace_id": "cc42aa2b-…",
+    "channel": {
+      "type": "whatsapp",
+      "phone_number": "+5511999990000",
+      "provider": "whatsapp_cloud",
+      "provider_config": {
+        "api_key": "EAAG…",
+        "phone_number_id": "111111111111111",
+        "waba_id": "222222222222222"
+      }
+    }
+  }'</span></code></pre>
+
+    <div class="armadilha">
+      <h4>Os campos ficam na raiz, não dentro de <code>inbox</code></h4>
+      <p>
+        <code>{"name": …, "channel": …}</code> funciona. <code>{"inbox": {"name": …}}</code>
+        devolve erro sem mensagem útil, porque o controlador lê os parâmetros do nível raiz e não
+        acha o canal. Verificado nos dois formatos.
+      </p>
+    </div>
+
+    <div class="armadilha">
+      <h4>A credencial é validada na hora, contra a Meta</h4>
+      <p>
+        O EvoCRM chama <code>graph.facebook.com/{waba_id}/message_templates</code> durante o
+        <code>create</code>. Credencial errada não cria canal quebrado: devolve
+        <code>422</code> com <code>"Provider config Invalid Credentials"</code>. Se você recebeu
+        isso, o problema está no token da Meta ou no <code>waba_id</code> — não no formato do JSON.
+      </p>
+    </div>
+
+    <p>
+      <code>provider</code> aceita <code>whatsapp_cloud</code> (oficial),
+      <code>evolution</code> e <code>evolution_go</code> (não oficiais, por QR),
+      <code>baileys</code>, <code>notificame</code>, <code>zapi</code> e <code>default</code>.
+      <code>channel.type</code> aceita <code>whatsapp</code>, <code>api</code>,
+      <code>web_widget</code>, <code>email</code>, <code>telegram</code>, <code>line</code>,
+      <code>sms</code> e <code>sendgrid</code>.
+    </p>
+
+    <p>
+      A resposta traz <code>workspace_id</code>, então dá para conferir na hora em qual cliente o
+      canal caiu — sem ir ao banco.
+    </p>
+
+    <h2 id="r-canal-api">Receita · canal de API</h2>
+
+    <p>
+      Um canal do tipo <code>api</code> não fala com rede social nenhuma: ele recebe mensagens por
+      HTTP. É o jeito de testar um agente sem envolver WhatsApp, e de plugar um sistema próprio.
+    </p>
+
+    <pre><code>POST /api/v1/inboxes
+{ <span class="c-chv">"name"</span>: <span class="c-str">"Canal de testes"</span>, <span class="c-chv">"workspace_id"</span>: <span class="c-str">"…"</span>,
+  <span class="c-chv">"channel"</span>: { <span class="c-chv">"type"</span>: <span class="c-str">"api"</span> } }</code></pre>
+
+    <p>
+      A resposta traz um <code>identifier</code> no canal. Com ele, o caminho público aceita
+      mensagens sem autenticação — três chamadas, nesta ordem:
+    </p>
+
+    <pre><code><span class="c-cmt"># 1. o contato (você escolhe o source_id e reusa depois)</span>
+POST /public/api/v1/inboxes/{identifier}/contacts
+{ <span class="c-chv">"source_id"</span>: <span class="c-str">"paciente-42"</span>, <span class="c-chv">"name"</span>: <span class="c-str">"Maria"</span> }
+
+<span class="c-cmt"># 2. a conversa</span>
+POST /public/api/v1/inboxes/{identifier}/contacts/paciente-42/conversations
+{}
+
+<span class="c-cmt"># 3. a mensagem (aceita id, uuid ou display_id da conversa)</span>
+POST /public/api/v1/inboxes/{identifier}/contacts/paciente-42/conversations/395/messages
+{ <span class="c-chv">"content"</span>: <span class="c-str">"Quero marcar uma avaliação"</span> }</code></pre>
+
+    <div class="armadilha">
+      <h4>O caminho público responde <code>204</code> com corpo vazio</h4>
+      <p>
+        Os três endpoints acima criam o registro e devolvem <strong>corpo vazio</strong>. Não trate
+        isso como falha e não tente extrair o <code>id</code> da resposta — não vem. Mande o
+        <code>source_id</code> que você mesmo escolheu e consulte a conversa depois, se precisar
+        do identificador.
+      </p>
+    </div>
+
+    <h2 id="r-agente">Receita · agente de IA</h2>
+
+    <p>São dois passos: criar o agente e ligá-lo ao canal.</p>
+
+    <h3>Criar</h3>
+
+    <pre><code>POST /api/v1/agent_bots
+{
+  <span class="c-chv">"name"</span>: <span class="c-str">"Agente Clínica Nova"</span>,
+  <span class="c-chv">"outgoing_url"</span>: <span class="c-str">"https://n8n.exemplo.com/webhook/clinica-nova"</span>,
+  <span class="c-chv">"workspace_id"</span>: <span class="c-str">"cc42aa2b-…"</span>,
+  <span class="c-chv">"debounce_time"</span>: 3,
+  <span class="c-chv">"text_segmentation_enabled"</span>: true
+}</code></pre>
+
+    <h3>Ligar ao canal</h3>
+
+    <pre><code>POST /api/v1/inboxes/{inbox_id}/set_agent_bot
+{ <span class="c-chv">"agent_bot_id"</span>: <span class="c-str">"3df714c6-…"</span> }</code></pre>
+
+    <div class="armadilha">
+      <h4><code>set_agent_bot</code> substitui, não acumula</h4>
+      <p>
+        Um canal tem um agente. Chamar de novo com outro <code>agent_bot_id</code> troca o vínculo
+        anterior em silêncio. Se você quer conferir o que está ligado, use
+        <code>GET /api/v1/inboxes/{id}/agent_bot</code>.
+      </p>
+    </div>
+
+    <div class="armadilha">
+      <h4>Agente de um cliente não atende o canal de outro</h4>
+      <p>
+        A tentativa volta <code>422</code> com
+        <em>"pertence a outro workspace e nao pode atender esta caixa"</em>. Agente global
+        (sem <code>workspace_id</code>) entra em qualquer canal — é assim que um agente
+        compartilhado nosso funciona.
+      </p>
+    </div>
+
+    <h3>O que o agente recebe</h3>
+
+    <p>
+      Quando chega mensagem, o EvoCRM faz <code>POST</code> na <code>outgoing_url</code> com um
+      envelope JSON-RPC no formato A2A. O que interessa está em <code>params.metadata</code>:
+    </p>
+
+    <pre><code>{
+  <span class="c-chv">"jsonrpc"</span>: <span class="c-str">"2.0"</span>,
+  <span class="c-chv">"method"</span>: <span class="c-str">"message/send"</span>,
+  <span class="c-chv">"params"</span>: {
+    <span class="c-chv">"contextId"</span>: <span class="c-str">"7aea2480-…"</span>,      <span class="c-cmt">// uuid da conversa = a sessão</span>
+    <span class="c-chv">"userId"</span>:    <span class="c-str">"360f177a-…"</span>,      <span class="c-cmt">// id do contato</span>
+    <span class="c-chv">"message"</span>: { <span class="c-chv">"role"</span>: <span class="c-str">"user"</span>,
+                  <span class="c-chv">"parts"</span>: [{ <span class="c-chv">"type"</span>: <span class="c-str">"text"</span>, <span class="c-chv">"text"</span>: <span class="c-str">"Quanto custa?"</span> }] },
+    <span class="c-chv">"metadata"</span>: {
+      <span class="c-chv">"agent_bot_id"</span>: <span class="c-str">"…"</span>, <span class="c-chv">"inboxId"</span>: <span class="c-str">"…"</span>,
+      <span class="c-chv">"contact"</span>: { <span class="c-cmt">/* nome, telefone, atributos, etiquetas */</span> },
+      <span class="c-chv">"evoai_crm_data"</span>: { <span class="c-chv">"conversation"</span>: { <span class="c-chv">"display_id"</span>: 395 },
+                          <span class="c-chv">"inbox"</span>: { <span class="c-chv">"id"</span>: <span class="c-str">"…"</span>, <span class="c-chv">"name"</span>: <span class="c-str">"…"</span> },
+                          <span class="c-chv">"event"</span>: <span class="c-str">"message_created"</span> }
+    }
+  }
+}</code></pre>
+
+    <div class="armadilha">
+      <h4>O payload não diz de qual cliente é</h4>
+      <p>
+        Não há <code>workspace_id</code> no envelope — só <code>inboxId</code>. Um fluxo n8n que
+        atende mais de uma clínica precisa manter o mapa de canal para cliente à mão. Abriu canal
+        novo e esqueceu de atualizar o mapa? O agente responde com a base da clínica errada, e o
+        CRM não tem como perceber. <strong>Um fluxo por cliente</strong> é o arranjo seguro
+        enquanto isso.
+      </p>
+    </div>
+
+    <p>
+      Mensagem de atendente humano e mensagem do próprio agente <strong>não</strong> são entregues
+      ao agente — verificado. É o que impede o eco e o que sustenta a intervenção humana.
+    </p>
+
+    <h2 id="r-automacao">Receita · automação</h2>
+
+    <p>
+      Uma regra tem gatilho (<code>event_name</code>), condições e ações. A regra roda apenas nos
+      eventos do próprio workspace; regra sem <code>workspace_id</code> roda para todos os clientes.
+    </p>
+
+    <pre><code>POST /api/v1/automation_rules
+{
+  <span class="c-chv">"name"</span>: <span class="c-str">"Pausar IA quando o atendente responde"</span>,
+  <span class="c-chv">"event_name"</span>: <span class="c-str">"message_created"</span>,
+  <span class="c-chv">"active"</span>: true,
+  <span class="c-chv">"workspace_id"</span>: <span class="c-str">"cc42aa2b-…"</span>,
+  <span class="c-chv">"conditions"</span>: [{
+    <span class="c-chv">"attribute_key"</span>:   <span class="c-str">"sender_type"</span>,
+    <span class="c-chv">"filter_operator"</span>: <span class="c-str">"equal_to"</span>,
+    <span class="c-chv">"values"</span>:          [<span class="c-str">"user"</span>],
+    <span class="c-chv">"query_operator"</span>:  null
+  }],
+  <span class="c-chv">"actions"</span>: [{ <span class="c-chv">"action_name"</span>: <span class="c-str">"add_label"</span>, <span class="c-chv">"action_params"</span>: [<span class="c-str">"agente-off"</span>] }]
+}</code></pre>
+
+    <h3>Gatilhos</h3>
+    <p>
+      <code>message_created</code>, <code>conversation_created</code>,
+      <code>conversation_updated</code>, <code>conversation_status_changed</code>,
+      <code>contact_created</code>, <code>contact_updated</code>.
+    </p>
+
+    <h3>Condições</h3>
+
+    <div class="tab-rolo">
+      <table>
+        <thead><tr><th>Sobre</th><th>Chaves</th></tr></thead>
+        <tbody>
+          <tr><td>Mensagem</td><td><code>content</code>, <code>message_type</code>, <code>sender_type</code></td></tr>
+          <tr><td>Conversa</td><td><code>status</code>, <code>assignee_id</code>, <code>team_id</code>, <code>inbox_id</code>, <code>labels</code>, <code>priority</code>, <code>conversation_language</code>, <code>mail_subject</code>, <code>browser_language</code>, <code>referer</code></td></tr>
+          <tr><td>Contato</td><td><code>name</code>, <code>email</code>, <code>phone_number</code>, <code>identifier</code>, <code>city</code>, <code>country_code</code>, <code>company</code>, <code>blocked</code></td></tr>
+          <tr><td>Funil</td><td><code>pipeline_id</code>, <code>pipeline_stage_id</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="armadilha">
+      <h4><code>sender_type</code> só aceita valores minúsculos</h4>
+      <p>
+        Use <code>"user"</code> para atendente humano e <code>"agentbot"</code> para agente de IA —
+        nunca <code>"User"</code> ou <code>"AgentBot"</code>. A consulta envolve a coluna em
+        <code>LOWER()</code>, mas o valor que você manda só é rebaixado quando a chave é
+        <code>content</code>. Com maiúscula a regra salva, fica ativa e nunca casa — o pior tipo
+        de falha, porque é silenciosa.
+      </p>
+    </div>
+
+    <h3>Ações</h3>
+    <p>
+      <code>send_message</code>, <code>send_canned_response</code>, <code>send_template</code>,
+      <code>send_attachment</code>, <code>add_label</code>, <code>remove_label</code>,
+      <code>assign_agent</code>, <code>assign_team</code>, <code>change_status</code>,
+      <code>change_priority</code>, <code>resolve_conversation</code>,
+      <code>snooze_conversation</code>, <code>mute_conversation</code>,
+      <code>send_webhook_event</code>, <code>send_email_to_team</code>,
+      <code>send_email_transcript</code>, <code>assign_to_pipeline</code>,
+      <code>update_pipeline_stage</code>, <code>create_pipeline_task</code>,
+      <code>update_custom_attribute</code>.
+    </p>
+
+    <h2 id="r-conversa">Receita · movimentar conversa</h2>
+
+    <pre><code><span class="c-cmt"># responder</span>
+POST /api/v1/conversations/{id}/messages
+{ <span class="c-chv">"content"</span>: <span class="c-str">"Bom dia!"</span>, <span class="c-chv">"message_type"</span>: <span class="c-str">"outgoing"</span> }
+
+<span class="c-cmt"># mudar o status: open · resolved · pending · snoozed</span>
+POST /api/v1/conversations/{id}/toggle_status
+{ <span class="c-chv">"status"</span>: <span class="c-str">"open"</span> }
+
+<span class="c-cmt"># atribuir a um atendente (ou "team_id" para um time)</span>
+POST /api/v1/conversations/{id}/assignments
+{ <span class="c-chv">"assignee_id"</span>: <span class="c-str">"…"</span> }
+
+<span class="c-cmt"># devolver para o agente de IA</span>
+POST /api/v1/conversations/{id}/return_to_bot
+
+<span class="c-cmt"># etiquetar</span>
+POST /api/v1/conversations/{id}/labels
+{ <span class="c-chv">"labels"</span>: [<span class="c-str">"retorno"</span>, <span class="c-str">"orcamento-enviado"</span>] }</code></pre>
+
+    <p>
+      <code>return_to_bot</code> falha com <em>"inbox has no agent bot connected"</em> se o canal
+      não tiver agente ativo. Lembre que <code>status</code> ativo no vínculo é
+      <strong><code>0</code></strong>, não <code>1</code>.
+    </p>
+
+    <h2 id="r-funil">Receita · movimentar o funil</h2>
+
+    <pre><code>PATCH /api/v1/pipelines/{pipeline_id}/pipeline_items/{item_id}/move_to_stage
+{ <span class="c-chv">"new_stage_id"</span>: <span class="c-str">"95e835dd-…"</span>, <span class="c-chv">"notes"</span>: <span class="c-str">"paciente confirmou"</span> }</code></pre>
+
+    <div class="armadilha">
+      <h4>O parâmetro é <code>new_stage_id</code></h4>
+      <p>
+        Não <code>pipeline_stage_id</code>, nem <code>stage_id</code>. Errar o nome devolve
+        <code>404 "Stage not found in this pipeline"</code> — mensagem que induz a procurar o
+        problema na etapa, quando ele está no nome do campo.
+      </p>
+    </div>
+
+    <p>Para mover vários de uma vez, <code>PATCH …/pipeline_items/bulk_move</code>.</p>
+
+    <h2 id="r-contato">Receita · contatos</h2>
+
+    <pre><code>POST /api/v1/contacts
+{ <span class="c-chv">"name"</span>: <span class="c-str">"Maria Souza"</span>, <span class="c-chv">"phone_number"</span>: <span class="c-str">"+5511987654321"</span>,
+  <span class="c-chv">"workspace_id"</span>: <span class="c-str">"cc42aa2b-…"</span> }</code></pre>
+
+    <p>
+      O mesmo telefone pode existir em dois clientes: são registros independentes, um por workspace.
+      Isso é de propósito — um paciente que fala com duas clínicas não vira um contato só, com o
+      histórico das duas à vista de ambas.
+    </p>
+
+    <h2 id="armadilhas">Armadilhas, em um lugar só</h2>
+
+    <p>
+      Cada item aqui já derrubou uma chamada de verdade. Se algo não funciona e o JSON parece certo,
+      comece por esta lista.
+    </p>
+
+    <div class="tab-rolo">
+      <table>
+        <thead><tr><th>Onde</th><th>O que parece</th><th>O que é</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Criar canal</td>
+            <td>Erro vago ao mandar <code>{"inbox": {…}}</code></td>
+            <td>Os campos vão na raiz: <code>{"name": …, "channel": {…}}</code>.</td>
+          </tr>
+          <tr>
+            <td>Mover no funil</td>
+            <td><code>404 Stage not found</code></td>
+            <td>O campo é <code>new_stage_id</code>.</td>
+          </tr>
+          <tr>
+            <td>Condição de remetente</td>
+            <td>Regra ativa que nunca dispara</td>
+            <td><code>"user"</code> e <code>"agentbot"</code>, minúsculos.</td>
+          </tr>
+          <tr>
+            <td>Vínculo agente↔canal</td>
+            <td>Agente ligado mas mudo</td>
+            <td><code>status</code> ativo é <code>0</code>; <code>1</code> é inativo.</td>
+          </tr>
+          <tr>
+            <td>WhatsApp oficial</td>
+            <td><code>422 Invalid Credentials</code></td>
+            <td>A Meta é consultada na hora. O JSON está certo; o token não.</td>
+          </tr>
+          <tr>
+            <td>Caminho público</td>
+            <td>Resposta vazia</td>
+            <td><code>204</code> é sucesso. Use o <code>source_id</code> que você escolheu.</td>
+          </tr>
+          <tr>
+            <td>Emitir chave</td>
+            <td><code>Token can't be blank</code></td>
+            <td>Passe <code>token:</code> e <code>name:</code> explicitamente.</td>
+          </tr>
+          <tr>
+            <td>Recurso “sumiu”</td>
+            <td><code>404</code> em id que existe</td>
+            <td>É de outro workspace. Confira <code>GET /workspaces/current</code>.</td>
+          </tr>
+          <tr>
+            <td>Criar sem workspace</td>
+            <td>Recurso aparece para todos os clientes</td>
+            <td>Chave de admin sem <code>workspace_id</code> cria global.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="indice">Índice de endpoints</h2>
+
+    <p>
+      As 525 rotas da <code>/api/v1</code>, agrupadas. As famílias das receitas vêm primeiro; o
+      resto segue em ordem alfabética. Rotas com <code>:id</code> aceitam o UUID do recurso.
+    </p>
+
+    <details class="fam"><summary><span class="fam-nome">Workspaces (clientes)</span><span class="fam-n">4</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/workspaces</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/workspaces/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/workspaces/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/workspaces/current</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Canais</span><span class="fam-n">16</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inboxes</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/inboxes/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inboxes/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/inboxes/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/inboxes/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inboxes/:id/agent_bot</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inboxes/:id/assignable_agents</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/inboxes/:id/avatar</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/disconnect_channel_provider</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inboxes/:id/facebook_posts</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/message_templates/:template_id/sync_with_whatsapp_cloud</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/message_templates/sync</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/set_agent_bot</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/setup_channel_provider</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inboxes/:id/sync_whatsapp_subscription</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Agentes de IA</span><span class="fam-n">7</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/agent_bots</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/agent_bots</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/agent_bots/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/agent_bots/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/agent_bots/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/agent_bots/:id</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/agent_bots/:id/avatar</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Conversas</span><span class="fam-n">49</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/assignments</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/direct_uploads</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/conversations/:conversation_id/draft_messages</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:conversation_id/draft_messages</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/conversations/:conversation_id/draft_messages</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/conversations/:conversation_id/draft_messages</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:conversation_id/facebook_comment_moderations</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:conversation_id/labels</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/labels</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:conversation_id/messages</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/messages</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/conversations/:conversation_id/messages/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/conversations/:conversation_id/messages/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/conversations/:conversation_id/messages/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/messages/:id/retry</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/conversations/:conversation_id/participants</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:conversation_id/participants</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/conversations/:conversation_id/participants</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:conversation_id/participants</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/conversations/:conversation_id/participants</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/conversations/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/conversations/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/conversations/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/archive</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:id/attachments</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/custom_attributes</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/email_team</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/:id/inbox_assistant</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/mute</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/pin</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/return_to_bot</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/toggle_priority</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/toggle_status</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/toggle_typing_status</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/transcript</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/unarchive</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/unmute</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/unpin</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/unread</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/:id/update_last_seen</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/available_for_pipeline</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/filter</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/conversations/import</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/meta</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/search</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/conversations/unread_count</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Contatos</span><span class="fam-n">31</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/:contact_id/companies</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/contacts/:contact_id/companies/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/:contact_id/contact_inboxes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:contact_id/conversations</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:contact_id/events</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:contact_id/labels</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/:contact_id/labels</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:contact_id/notes</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/:contact_id/notes</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/contacts/:contact_id/notes/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:contact_id/notes/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/contacts/:contact_id/notes/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/contacts/:contact_id/notes/:id</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/contacts/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/contacts/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/contacts/:id</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/contacts/:id/avatar</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:id/companies</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:id/contactable_inboxes</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/:id/destroy_custom_attributes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/:id/pipelines</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/active</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/bulk_transfer</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/companies_list</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/export</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/filter</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contacts/import</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/contacts/search</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Funis</span><span class="fam-n">60</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:id/archive</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:id/set_as_default</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:id/stats</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id/move_to_stage</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id/update_conversation</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:id/update_custom_fields</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/products</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/products</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/products/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/products/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/products/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/tasks</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/:pipeline_item_id/tasks</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/available_contacts</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/available_conversations</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/bulk_move</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/move_conversation</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_items/stats</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:pipeline_id/pipeline_service_definitions/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id/bulk_move_conversations</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id/move_down</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/:id/move_up</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_stages/reorder</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/add_subtask</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/cancel</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/complete</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/move</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/reopen</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/:id/reorder</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/:pipeline_id/pipeline_tasks/statistics</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/by_contact/:contact_id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/by_conversation/:conversation_id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/pipelines/stats</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Automações</span><span class="fam-n">8</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/automation_rules</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/automation_rules</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/automation_rules/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/automation_rules/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/automation_rules/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/automation_rules/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/automation_rules/:id/clone</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/automation_rules/:id/runs</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Etiquetas</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/labels</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/labels</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/labels/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/labels/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/labels/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/labels/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Respostas rápidas</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/canned_responses</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/canned_responses</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/canned_responses/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/canned_responses/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/canned_responses/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/canned_responses/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Times</span><span class="fam-n">10</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/teams</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/teams</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/teams/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/teams/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/teams/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/teams/:id</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/teams/:team_id/team_members</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/teams/:team_id/team_members</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/teams/:team_id/team_members</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/teams/:team_id/team_members</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Macros</span><span class="fam-n">7</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/macros</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/macros</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/macros/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/macros/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/macros/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/macros/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/macros/:id/execute</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Webhooks</span><span class="fam-n">24</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/webhooks</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/webhooks/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/webhooks/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/webhooks/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/erp/:provider</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/facebook/feed</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/gmail/pubsub</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/webhooks/instagram</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/instagram</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/line/:line_channel_id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/sms/:phone_number</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/sms/bandwidth</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/sms/twilio</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/telegram/:bot_token</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/webhooks/twitter</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/twitter</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/webhooks/whatsapp</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/whatsapp</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/webhooks/whatsapp/:phone_number</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/whatsapp/:phone_number</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/whatsapp/evolution</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/whatsapp/evolution_go</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/webhooks/whatsapp/zapi</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Modelos de mensagem</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/message_templates</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/message_templates</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/message_templates/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/message_templates/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/message_templates/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/message_templates/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Atributos personalizados</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/custom_attribute_definitions</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/custom_attribute_definitions</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/custom_attribute_definitions/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/custom_attribute_definitions/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/custom_attribute_definitions/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/custom_attribute_definitions/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Produtos</span><span class="fam-n">12</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/products</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/products</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/products/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/products/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/products/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/products/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/products/:product_id/variants</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/products/:product_id/variants</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/products/:product_id/variants/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/products/:product_id/variants/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/products/:product_id/variants/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/products/bulk</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">Painel</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/dashboard/customer</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">actions</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/actions/contact_merge</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">admin</span><span class="fam-n">4</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/admin/app_configs/:config_type</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/admin/app_configs/:config_type</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/admin/app_configs/:config_type</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/admin/app_configs/:config_type/test_connection</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">agents</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/agents</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/agents</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/agents/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/agents/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/agents/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/agents/bulk_create</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">ai agents</span><span class="fam-n">3</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/ai_agents/:ai_agent_id/products</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/ai_agents/:ai_agent_id/products</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/ai_agents/:ai_agent_id/products/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">assignable agents</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/assignable_agents</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">bulk actions</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/bulk_actions</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">callbacks</span><span class="fam-n">4</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/callbacks/facebook_pages</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/callbacks/reauthorize_page</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/callbacks/register_facebook_page</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/callbacks/register_facebook_page</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">channels</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/channels/notificame/verify</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/channels/twilio_channel</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">chat pages</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/chat_pages</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/chat_pages</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/chat_pages/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/chat_pages/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/chat_pages/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/chat_pages/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">contact inboxes</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/contact_inboxes/filter</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">crm forms</span><span class="fam-n">7</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/crm_forms</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/crm_forms</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/crm_forms/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/crm_forms/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/crm_forms/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/crm_forms/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/crm_forms/:id/leads</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">csat survey responses</span><span class="fam-n">3</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/csat_survey_responses</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/csat_survey_responses/download</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/csat_survey_responses/metrics</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">custom filters</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/custom_filters</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/custom_filters</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/custom_filters/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/custom_filters/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/custom_filters/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/custom_filters/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">dashboard apps</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/dashboard_apps</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/dashboard_apps</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/dashboard_apps/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/dashboard_apps/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/dashboard_apps/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/dashboard_apps/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">dynamic oauth</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/dynamic_oauth/validate_client</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">evolution</span><span class="fam-n">20</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/authorization</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/health</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/instances</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/evolution/instances/:id/logout</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/privacy/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/evolution/privacy/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/evolution/privacy/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/profile/:instance_name/fetch</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/profile/:instance_name/name</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/evolution/profile/:instance_name/picture</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/profile/:instance_name/picture</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/profile/:instance_name/status</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/proxies</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/proxies/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/qrcodes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/qrcodes/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution/settings</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution/settings/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/evolution/settings/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/evolution/settings/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">evolution go</span><span class="fam-n">22</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/authorization</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/authorization/connect</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/evolution_go/authorization/delete_instance</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/authorization/fetch</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/evolution_go/authorization/logout</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/authorization/qrcode</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/privacy/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/evolution_go/privacy/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/evolution_go/privacy/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/profile/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/:id/name</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/evolution_go/profile/:id/picture</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/:id/picture</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/:id/status</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/avatar</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/info</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/profile/picture</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/evolution_go/qrcodes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/qrcodes/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/evolution_go/settings/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/evolution_go/settings/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/evolution_go/settings/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">facebook comment moderations</span><span class="fam-n">5</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/facebook_comment_moderations</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/facebook_comment_moderations/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/facebook_comment_moderations/:id/approve</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/facebook_comment_moderations/:id/regenerate_response</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/facebook_comment_moderations/:id/reject</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">global config</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/global_config</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">google</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/google/authorization</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/google/callback</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">inbox members</span><span class="fam-n">4</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/inbox_members</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/inbox_members</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/inbox_members</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/inbox_members/:inbox_id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">instagram</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/instagram/authorization</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/instagram/callback</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">integrations</span><span class="fam-n">54</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/apps</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/apps/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/asana/credentials</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/atlassian/credentials</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/availability</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/canva/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/dyte/add_participant_to_meeting</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/dyte/create_a_meeting</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/evolution_hub/available_channels</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/evolution_hub/channels</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/evolution_hub/meta_app_options</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/evolution_hub/plan</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/github/credentials</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/google_calendar/credentials</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/google_sheets/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/hooks</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/integrations/hooks/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hooks/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/integrations/hooks/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/integrations/hooks/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/hooks/:id/process_event</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/integrations/hubspot</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/hubspot/create_deal</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/hubspot/link_deal</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/linked_deals</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/owners</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/pipeline_stages</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/pipelines</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/hubspot/search_deals</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/hubspot/unlink_deal</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/integrations/linear</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/linear/create_issue</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/linear/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/linear/link_issue</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/linear/linked_issues</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/linear/search_issue</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/linear/team_entities</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/linear/teams</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/linear/unlink_issue</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/monday/credentials</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/notion/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/openai/process_event</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/paypal/credentials</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/integrations/shopify</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/shopify/auth</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/shopify/orders</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/integrations/slack</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/integrations/slack</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/slack</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/integrations/slack</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/slack/list_all_channels</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/integrations/supabase/credentials</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/integrations/webhooks</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">microsoft</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/microsoft/authorization</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/microsoft/callback</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">notificame</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/notificame/channels</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">notification settings</span><span class="fam-n">3</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/notification_settings</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/notification_settings</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/notification_settings</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">notification subscriptions</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/notification_subscriptions</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/notification_subscriptions</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">notifications</span><span class="fam-n">9</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/notifications</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/notifications/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/notifications/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/notifications/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/notifications/:id/snooze</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/notifications/:id/unread</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/notifications/destroy_all</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/notifications/read_all</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/notifications/unread_count</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">oauth</span><span class="fam-n">8</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/oauth/applications</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/oauth/applications</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/oauth/applications/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/oauth/applications/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/oauth/applications/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/oauth/applications/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/oauth/applications/:id/regenerate_secret</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/oauth/authorization</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">pipeline tasks</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/pipeline_tasks/for_conversation</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">profile</span><span class="fam-n">6</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/profile</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/profile</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/profile</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/profile/auto_offline</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/profile/availability</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/profile/avatar</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">scheduled actions</span><span class="fam-n">8</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/scheduled_actions</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/scheduled_actions</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/scheduled_actions/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/scheduled_actions/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/scheduled_actions/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/scheduled_actions/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/scheduled_actions/by_contact/:contact_id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/scheduled_actions/by_deal/:deal_id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">search</span><span class="fam-n">4</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/search</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/search/contacts</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/search/conversations</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/search/messages</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">segments</span><span class="fam-n">10</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/segments</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/segments</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/segments/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/segments/:id</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/segments/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/segments/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/segments/:id/contact-ids</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/segments/:id/recompute</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/segments/preview</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/segments/recompute-all</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">templates</span><span class="fam-n">3</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/templates/export</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/templates/exportable_inventory</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/templates/import</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">upload</span><span class="fam-n">1</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/upload</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">user tours</span><span class="fam-n">3</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v get">GET</span><code>/api/v1/user_tours</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/user_tours</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/user_tours/:tour_key</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">whatsapp</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/whatsapp/authorization</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/whatsapp/callback</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">widget</span><span class="fam-n">24</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/config</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/widget/contact</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/widget/contact</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/widget/contact</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/contact/destroy_custom_attributes</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/widget/contact/set_user</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/widget/conversations</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations/destroy_custom_attributes</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations/set_custom_attributes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/widget/conversations/toggle_status</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations/toggle_typing</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations/transcript</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/conversations/update_last_seen</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/direct_uploads</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/events</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/widget/inbox_members</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/integrations/dyte/add_participant_to_meeting</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/labels</code></div>
+<div class="ep"><span class="v del">DELETE</span><code>/api/v1/widget/labels/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/widget/messages</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/widget/messages</code></div>
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/widget/messages/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/widget/messages/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">working hours</span><span class="fam-n">2</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v patch">PATCH</span><code>/api/v1/working_hours/:id</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/working_hours/:id</code></div>
+</div></details>
+<details class="fam"><summary><span class="fam-nome">zapi</span><span class="fam-n">21</span></summary><div class="fam-corpo">
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/qrcodes</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/zapi/qrcodes/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/qrcodes/:id</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/zapi/qrcodes/status</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/zapi/settings/:id</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/disconnect</code></div>
+<div class="ep"><span class="v get">GET</span><code>/api/v1/zapi/settings/:id/privacy_disallowed_contacts</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_description</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_group_add_permission</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_last_seen</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_messages_duration</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_online</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_photo_visualization</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/privacy_set_read_receipts</code></div>
+<div class="ep"><span class="v post">POST</span><code>/api/v1/zapi/settings/:id/restart</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_call_reject</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_call_reject_message</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_instance_name</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_profile_description</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_profile_name</code></div>
+<div class="ep"><span class="v patch">PUT</span><code>/api/v1/zapi/settings/:id/update_profile_picture</code></div>
+</div></details>
+
+    <footer class="rodape">
+      <p>
+        Levantado a partir de <code>rails routes</code> na instalação em execução e conferido
+        controller a controller. As receitas foram executadas contra o ambiente de desenvolvimento
+        em 6 de agosto de 2026 — as respostas citadas são as que voltaram de verdade.
+      </p>
+      <p>
+        Achou divergência entre o que está escrito aqui e o que a API respondeu? A API tem razão;
+        avise para corrigirmos a página.
+      </p>
+    </footer>
+
+  </main>
+</div>
