@@ -161,19 +161,31 @@ class User < ApplicationRecord
     # unenforceable for users with no memberships — the common state, since
     # most installs never assigned inboxes.
     ws = active_workspace_id
-    if ws.present?
-      # EVO-CUSTOM: o GESTOR alcanca todas as caixas do cliente dele sem precisar
-      # ser membro de cada uma. E o que separa "supervisor de atendimento" de
-      # "atendente": sem isto, dar a supervisao a alguem exigiria adiciona-lo a
-      # cada caixa na mao, e uma caixa nova nasceria invisivel para ele.
-      return Inbox.where(workspace_id: ws) if gestor_de?(ws)
-
-      return inboxes.where(workspace_id: ws)
-    end
+    return inboxes_do_workspace(ws) if ws.present?
 
     return Inbox.all if unrestricted_inbox_access?
 
     inboxes
+  end
+
+  # EVO-CUSTOM: quem alcanca TODAS as caixas de um workspace, e quem alcanca so
+  # as suas.
+  #
+  #   - GESTOR do workspace: todas. E o que separa "supervisor de atendimento" de
+  #     "atendente" — sem isto, dar a supervisao a alguem exigiria adiciona-lo a
+  #     cada caixa na mao, e uma caixa nova nasceria invisivel para ele.
+  #
+  #   - NOSSO ADMIN que entrou pelo seletor: todas tambem. Sem esta linha ele
+  #     recebia ZERO: `inboxes` passa por inbox_members, e admin nosso nao e
+  #     membro de caixa nenhuma. Medido — ao escolher um workspace no seletor, a
+  #     tela de Canais ficava vazia, que e pior que nao filtrar, porque parece
+  #     que o cliente nao tem canal.
+  #
+  #   - membro comum: so as caixas de que participa, dentro do workspace.
+  def inboxes_do_workspace(workspace_id)
+    return Inbox.where(workspace_id: workspace_id) if gestor_de?(workspace_id) || !belongs_to_workspace?
+
+    inboxes.where(workspace_id: workspace_id)
   end
 
   # EVO-CUSTOM: usuario que PERTENCE a um workspace nunca ve tudo, mesmo com
@@ -194,6 +206,16 @@ class User < ApplicationRecord
 
   def unrestricted_inbox_access?
     return false if belongs_to_workspace?
+
+    # EVO-CUSTOM: entrar num workspace pelo seletor e uma LENTE, e ninguem a fura
+    # — nem quem tem acesso amplo. "Irrestrito" quer dizer que ele PODE escolher
+    # qualquer workspace, nao que a escolha seja ignorada.
+    #
+    # Sem esta linha o seletor trocava a logo e as listas de funil/etiqueta, mas
+    # contatos, busca e painel seguiam mostrando a instalacao inteira. Medido: com
+    # o Oral Riso selecionado, o super admin via os 1.997 contatos de todas as
+    # clinicas em vez dos 271 dele.
+    return false if Current.workspace_id.present?
 
     administrator? || Current.evo_can_read_all_inboxes
   end

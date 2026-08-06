@@ -20,7 +20,10 @@ class ConversationFinder
   def initialize(current_user, params)
     @current_user = current_user
     # Avoid remote role lookup (evo-auth get_role) on conversations index hot path.
-    @is_admin = current_user&.administrator? || false
+    # EVO-CUSTOM: era `administrator?`, que ignorava o workspace ativo — o super
+    # admin dentro do Oral Riso continuava recebendo a fila das tres clinicas.
+    # `unrestricted_inbox_access?` ja considera a lente do seletor.
+    @is_admin = (current_user&.unrestricted_inbox_access? if current_user) || false
     @has_conversations_read = false
     @params = params || {}
   end
