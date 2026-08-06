@@ -31,7 +31,10 @@ module InboxSerializer
              :timezone, :allow_messages_after_resolved, :auto_assignment_config,
              :business_name, :portal_id,
              :sender_name_type, :additional_attributes, :csat_config,
-             :lock_to_single_conversation, :default_conversation_status, :callback_webhook_url],
+             :lock_to_single_conversation, :default_conversation_status, :callback_webhook_url,
+             # EVO-CUSTOM: quem cria canal por script precisa conferir em qual
+             # cliente ele caiu — sem isto so dava para saber consultando o banco.
+             :workspace_id],
       methods: [:avatar_url]
     )
 

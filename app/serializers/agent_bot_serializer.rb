@@ -9,6 +9,8 @@ module AgentBotSerializer
     agent_bot_data = {
       id: agent_bot.id,
       name: agent_bot.name,
+      # EVO-CUSTOM: quem cria por script precisa conferir onde o recurso caiu.
+      workspace_id: agent_bot.workspace_id,
       description: agent_bot.description,
       outgoing_url: agent_bot.outgoing_url,
       bot_type: agent_bot.bot_type,

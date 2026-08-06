@@ -81,14 +81,25 @@ module WorkspaceScopeConcern
   # O corpo e aceito alem do header porque a API e usada por script: exigir
   # header numa chamada que ja manda JSON e o tipo de detalhe que faz o agente
   # de IA errar e criar o recurso no lugar errado.
+  # O corpo e lido de dois lugares porque as duas formas chegam na pratica: no
+  # topo (`{"name": ..., "workspace_id": ...}`, o formato dos controllers estilo
+  # Chatwoot) e sob a chave do recurso. O ParamsWrapper do Rails costuma
+  # espelhar um no outro, mas depender desse espelho e fragil — melhor olhar os
+  # dois.
   def workspace_id_for_create(corpo = nil)
     return current_user_workspace_id if current_user_workspace_id.present?
     return Current.workspace_id unless admin_pode_escolher_workspace?
 
-    pedido = corpo.is_a?(ActionController::Parameters) || corpo.is_a?(Hash) ? corpo[:workspace_id] : corpo
+    pedido = extrai_workspace_id(corpo) || extrai_workspace_id(params)
     return Current.workspace_id if pedido.blank?
 
     Workspace.where(id: pedido).pick(:id)
+  end
+
+  def extrai_workspace_id(fonte)
+    return nil unless fonte.is_a?(ActionController::Parameters) || fonte.is_a?(Hash)
+
+    fonte[:workspace_id].presence
   end
 
   def admin_pode_escolher_workspace?
