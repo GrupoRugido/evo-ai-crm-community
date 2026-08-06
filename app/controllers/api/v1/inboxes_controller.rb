@@ -24,8 +24,18 @@ module Api
           assignable_agents: 'inboxes.read',
           agent_bot: 'inboxes.read',
           set_agent_bot: 'inboxes.update',
-          setup_channel_provider: 'inboxes.update',
-          disconnect_channel_provider: 'inboxes.update',
+          # EVO-CUSTOM: reconectar o WhatsApp deixa de exigir inboxes.update.
+          #
+          # O cliente NAO deve configurar o canal, mas PRECISA reconectar sozinho
+          # quando a instancia dele cai e o WhatsApp pede QR novo — senao depende
+          # de nos para voltar a atender. Sao acoes distintas e o catalogo do
+          # auth-service ja as tinha separadas; era so o controller que as
+          # tratava como "configurar".
+          #
+          # A fronteira continua de pe: fetch_inbox faz `authorize @inbox, :show?`,
+          # entao so alcanca caixa que ele ja enxerga.
+          setup_channel_provider: 'inboxes.setup_channel_provider',
+          disconnect_channel_provider: 'inboxes.disconnect_channel_provider',
           sync_whatsapp_subscription: 'inboxes.update',
           avatar: 'inboxes.update',
           # Template CRUD moved to MessageTemplatesController (EVO-1716); only the

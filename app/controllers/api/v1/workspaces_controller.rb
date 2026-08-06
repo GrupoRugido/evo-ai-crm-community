@@ -25,7 +25,36 @@ class Api::V1::WorkspacesController < Api::V1::BaseController
     )
   end
 
+  # EVO-CUSTOM: edicao do workspace — hoje so a marca (nome e logo).
+  # Restrito a admin: o cliente nao troca a propria identidade visual, quem
+  # configura isso somos nos ao cadastrar o cliente.
+  def update
+    return render_forbidden unless admin_like?
+
+    workspace = Workspace.find_by(id: params[:id])
+    return error_response(ApiErrorCodes::RESOURCE_NOT_FOUND, 'Workspace not found', status: :not_found) if workspace.nil?
+
+    if workspace.update(workspace_params)
+      success_response(data: serialize(workspace), message: 'Workspace updated successfully')
+    else
+      error_response(
+        ApiErrorCodes::VALIDATION_ERROR,
+        'Validation failed',
+        details: workspace.errors.full_messages,
+        status: :unprocessable_entity
+      )
+    end
+  end
+
   private
+
+  def workspace_params
+    params.permit(:name, :logo_url, :active)
+  end
+
+  def render_forbidden
+    error_response(ApiErrorCodes::FORBIDDEN, 'Only administrators can change a workspace', status: :forbidden)
+  end
 
   def visible_workspaces
     return Workspace.active.order(:name) if admin_like?

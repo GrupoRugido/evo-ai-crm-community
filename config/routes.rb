@@ -162,7 +162,7 @@ Rails.application.routes.draw do
       resources :labels, only: [:index, :show, :create, :update, :destroy], controller: 'labels'
 
       # EVO-CUSTOM: alimenta o seletor de workspace da interface.
-      resources :workspaces, only: [:index] do
+      resources :workspaces, only: [:index, :update] do
         collection { get :current }
       end
 
