@@ -101,3 +101,6 @@ _evo-output/
 _bmad/
 _bmad-output/
 .claude/settings.json
+
+# worktrees de sessoes paralelas do Claude Code
+.claude/worktrees/
