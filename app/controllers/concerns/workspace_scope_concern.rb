@@ -29,10 +29,21 @@ module WorkspaceScopeConcern
     Current.workspace_id = current_user_workspace_id || admin_selected_workspace_id
   end
 
+  # EVO-CUSTOM: quem tem vinculo so opera DENTRO dos seus clientes.
+  #
+  # Um vinculo: e ele, sem escolha. Varios (gerente de contas nosso): o header
+  # escolhe, desde que aponte para um dos dele; um header de cliente alheio nao
+  # vira "sem workspace" — cai no primeiro vinculo, senao bastaria mandar um id
+  # qualquer para escapar do escopo.
   def current_user_workspace_id
-    return nil unless current_user.respond_to?(:workspace_id)
+    return nil unless current_user.respond_to?(:workspace_ids)
 
-    current_user&.workspace_id
+    ids = current_user.workspace_ids
+    return nil if ids.empty?
+    return ids.first if ids.size == 1
+
+    pedido = request.headers[WORKSPACE_HEADER].presence
+    ids.include?(pedido) ? pedido : ids.first
   end
 
   # So admin escolhe. E o id e validado contra a tabela para um header invalido
@@ -87,7 +98,7 @@ module WorkspaceScopeConcern
   # espelhar um no outro, mas depender desse espelho e fragil — melhor olhar os
   # dois.
   def workspace_id_for_create(corpo = nil)
-    return current_user_workspace_id if current_user_workspace_id.present?
+    return Current.workspace_id if current_user&.belongs_to_workspace?
     return Current.workspace_id unless admin_pode_escolher_workspace?
 
     pedido = extrai_workspace_id(corpo) || extrai_workspace_id(params)

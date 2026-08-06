@@ -11,7 +11,12 @@ class Workspace < ApplicationRecord
   has_many :labels, dependent: :nullify
   has_many :canned_responses, dependent: :nullify
   has_many :pipelines, dependent: :nullify
-  has_many :users, dependent: :nullify
+  has_many :teams, dependent: :nullify
+
+  # EVO-CUSTOM: a associacao com pessoas passou a ser pela tabela de vinculo,
+  # que e onde vivem o papel e a visibilidade de cada uma neste cliente.
+  has_many :workspace_members, dependent: :destroy
+  has_many :users, through: :workspace_members
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true,

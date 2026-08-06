@@ -92,8 +92,8 @@ class Api::V1::WorkspacesController < Api::V1::BaseController
   # clinicas no seletor. Pertencer a um workspace e o sinal mais forte e tem
   # prioridade sobre qualquer permissao ampla.
   def visible_workspaces
-    proprio = current_user&.workspace_id
-    return Workspace.active.where(id: proprio).order(:name) if proprio.present?
+    proprios = current_user&.workspace_ids || []
+    return Workspace.active.where(id: proprios).order(:name) if proprios.any?
     return Workspace.active.order(:name) if admin_like?
 
     Workspace.none

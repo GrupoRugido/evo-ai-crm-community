@@ -165,6 +165,9 @@ Rails.application.routes.draw do
       # provisionamento de cliente novo por script (create).
       resources :workspaces, only: [:index, :create, :update] do
         collection { get :current }
+        # Quem trabalha neste cliente, com que papel e enxergando quanto.
+        resources :members, only: [:index, :create, :update, :destroy],
+                            controller: 'workspace_members'
       end
 
       resources :agent_bots, only: [:index, :create, :show, :update, :destroy], controller: 'agent_bots' do
