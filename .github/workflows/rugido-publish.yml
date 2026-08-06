@@ -14,12 +14,9 @@ on:
     #   producao        -> stack evo_prod  (clientcrm.rugido.com)
     #   desenvolvimento -> stack evo_crm   (evocrm-dev.rugido.com)
     # As feat/* continuam publicando enquanto a migracao nao fecha.
+    # SO a desenvolvimento constroi — promover e subir a MESMA tag sha-*.
     branches:
-      - producao
       - desenvolvimento
-      - feat/intervencao-humana
-      - feat/workspaces
-      - feat/workspace-members
   workflow_dispatch:
 
 permissions:
