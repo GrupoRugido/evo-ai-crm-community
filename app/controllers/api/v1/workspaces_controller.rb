@@ -25,6 +25,33 @@ class Api::V1::WorkspacesController < Api::V1::BaseController
     )
   end
 
+  # EVO-CUSTOM: cadastrar cliente novo pela API.
+  #
+  # Faltava: sem isto o unico jeito de abrir um cliente era rails console ou o
+  # retrofit, o que trava o fluxo de quem provisiona por script. Restrito a
+  # admin pelo mesmo motivo do update.
+  #
+  # O slug e derivado do nome quando nao vem, porque e o campo que o operador
+  # esquece — e sem ele o registro nao salva.
+  def create
+    return render_forbidden unless admin_like?
+
+    workspace = Workspace.new(workspace_params)
+    workspace.slug = workspace.slug.presence || workspace.name.to_s.parameterize
+    workspace.active = true if workspace.active.nil?
+
+    if workspace.save
+      success_response(data: serialize(workspace), message: 'Workspace created successfully', status: :created)
+    else
+      error_response(
+        ApiErrorCodes::VALIDATION_ERROR,
+        'Validation failed',
+        details: workspace.errors.full_messages,
+        status: :unprocessable_entity
+      )
+    end
+  end
+
   # EVO-CUSTOM: edicao do workspace — hoje so a marca (nome e logo).
   # Restrito a admin: o cliente nao troca a propria identidade visual, quem
   # configura isso somos nos ao cadastrar o cliente.
@@ -49,7 +76,7 @@ class Api::V1::WorkspacesController < Api::V1::BaseController
   private
 
   def workspace_params
-    params.permit(:name, :logo_url, :active)
+    params.permit(:name, :slug, :logo_url, :active)
   end
 
   def render_forbidden
