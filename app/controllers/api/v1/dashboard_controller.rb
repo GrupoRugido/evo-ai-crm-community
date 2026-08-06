@@ -23,7 +23,7 @@ class Api::V1::DashboardController < Api::V1::BaseController
   # o usuario e membro. E o que faz o dashboard do papel "cliente" mostrar
   # apenas as metricas das caixas dele.
   def dashboard_allowed_inbox_ids
-    return nil if current_user.nil? || current_user.administrator? || Current.evo_can_read_all_inboxes
+    return nil if current_user.nil? || current_user.unrestricted_inbox_access?
 
     current_user.assigned_inboxes.pluck(:id)
   end

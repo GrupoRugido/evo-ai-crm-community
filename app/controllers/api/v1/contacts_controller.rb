@@ -436,7 +436,8 @@ class Api::V1::ContactsController < Api::V1::BaseController
   # dispensa o DISTINCT que o join exigiria.
   # nil = sem restricao.
   def accessible_contact_ids
-    return nil if current_user.nil? || current_user.administrator? || Current.evo_can_read_all_inboxes
+    # EVO-CUSTOM: unrestricted_inbox_access? ja considera o workspace — ver User.
+    return nil if current_user.nil? || current_user.unrestricted_inbox_access?
 
     ContactInbox.where(inbox_id: current_user.assigned_inboxes.select(:id)).select(:contact_id)
   end

@@ -90,7 +90,7 @@ class SearchService
     # logo acima — sem isto a busca global vazava contatos de caixas alheias.
     # Subconsulta de IDs em vez de joins: dispensa DISTINCT (que brigaria com
     # o order_on_last_activity_at aplicado adiante).
-    unless @current_user.nil? || @current_user.administrator? || Current.evo_can_read_all_inboxes
+    unless @current_user.nil? || @current_user.unrestricted_inbox_access?
       base = base.where(id: ContactInbox.where(inbox_id: accessable_inbox_ids).select(:contact_id))
     end
     @contacts = base.where(

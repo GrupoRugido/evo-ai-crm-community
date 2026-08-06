@@ -154,19 +154,33 @@ class User < ApplicationRecord
     # The old `inbox_members.empty? -> Inbox.all` degrade made that revoke
     # unenforceable for users with no memberships — the common state, since
     # most installs never assigned inboxes.
-    # EVO-CUSTOM: usuario que PERTENCE a um workspace nunca ve tudo, mesmo com
-    # conversations.read_all.
-    #
-    # Achado no QA: o atendente de um cliente herda essa permissao do papel
-    # `agent` do upstream e passava a enxergar 1.993 contatos em vez dos 270 da
-    # clinica dele. Faz sentido no upstream (instalacao de um cliente so, onde
-    # "todas as caixas" e "as caixas da empresa"); aqui significa "todas as
-    # clinicas". Pertencer a um workspace e o sinal mais forte.
-    return inboxes.where(workspace_id: workspace_id) if respond_to?(:workspace_id) && workspace_id.present?
+    return inboxes.where(workspace_id: workspace_id) if belongs_to_workspace?
 
-    return Inbox.all if administrator? || Current.evo_can_read_all_inboxes
+    return Inbox.all if unrestricted_inbox_access?
 
     inboxes
+  end
+
+  # EVO-CUSTOM: usuario que PERTENCE a um workspace nunca ve tudo, mesmo com
+  # conversations.read_all.
+  #
+  # Achado no QA: o atendente de um cliente herda essa permissao do papel
+  # `agent` do upstream e passava a enxergar 1.993 contatos em vez dos 270 da
+  # clinica dele. Faz sentido no upstream (instalacao de UM cliente, onde "todas
+  # as caixas" = "as caixas da empresa"); aqui significa "todas as clinicas".
+  #
+  # Estes dois metodos existem para a regra ficar em UM lugar: o bypass de
+  # `administrator? || evo_can_read_all_inboxes` estava repetido no controller de
+  # contatos, no SearchService e no dashboard, e corrigir so o assigned_inboxes
+  # deixava os outros vazando.
+  def belongs_to_workspace?
+    respond_to?(:workspace_id) && workspace_id.present?
+  end
+
+  def unrestricted_inbox_access?
+    return false if belongs_to_workspace?
+
+    administrator? || Current.evo_can_read_all_inboxes
   end
 
   def serializable_hash(options = nil)
