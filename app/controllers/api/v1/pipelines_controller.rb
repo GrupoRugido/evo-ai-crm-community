@@ -29,7 +29,16 @@ class Api::V1::PipelinesController < Api::V1::BaseController
     # include_services_info: o card de cada funil na LISTA mostra o "Valor Total" (soma dos
     # serviços dos itens) — antes vinha vazio porque o index não pedia esse cálculo. Pré-carrega
     # pipeline_items pra a soma de services_total_value não disparar N+1.
-    @pipelines = Pipeline.all
+    # EVO-CUSTOM: escopo por workspace ANTES do accessible_by.
+    #
+    # accessible_by libera o que e `visibility: public` — o que faz sentido numa
+    # instalacao de um cliente so, mas aqui significava que o funil publico de
+    # UMA clinica aparecia para TODAS. Verificado no QA: o cliente do Oral Riso
+    # enxergava o "Funil Cicatriclinic".
+    #
+    # Escopo estrito de proposito: funil e do cliente, nao ferramenta nossa
+    # compartilhada — funil global (workspace_id nulo) nao deve poluir a tela dele.
+    @pipelines = workspace_scope_strict(Pipeline.all)
                         .accessible_by(Current.user)
                         .active
                         .includes(pipeline_stages: [], pipeline_items: [])
@@ -219,7 +228,11 @@ class Api::V1::PipelinesController < Api::V1::BaseController
   private
 
   def fetch_pipeline
-    @pipeline = Pipeline.all
+    # EVO-CUSTOM: escopo tambem no acesso direto. Sem isto, o index escondia o
+    # funil de outro cliente mas bastava a URL /pipelines/<id> para abri-lo —
+    # esconder na lista nao e o mesmo que bloquear.
+    # Fora do escopo levanta RecordNotFound, que o app ja trata como 404.
+    @pipeline = workspace_scope_strict(Pipeline.all)
                           .includes(
                             :created_by,
                             pipeline_stages: [],
