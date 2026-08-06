@@ -208,7 +208,11 @@ class Api::V1::CannedResponsesController < Api::V1::BaseController # rubocop:dis
   end
 
   def canned_responses
-    scope = CannedResponse.includes(attachments: { file_attachment: :blob })
+    # EVO-CUSTOM: mesmo escopo permissivo das etiquetas — a resposta global
+    # (NULL) segue visivel, mas a de um cliente para de aparecer para o outro.
+    # Medido no dev: o cliente do Oral Riso via a "audio_enfermeira_cicatriclinic".
+    scope = workspace_scope(CannedResponse.all)
+            .includes(attachments: { file_attachment: :blob })
 
     if params[:search]
       scope
