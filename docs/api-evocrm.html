@@ -523,26 +523,37 @@ curl https://evocrm-api.gruporugido.com/api/v1/workspaces \
     <h3>Emitir uma chave</h3>
 
     <p>
-      O CRM não expõe endpoint para criar chave: a emissão vive no serviço de autenticação. Hoje,
-      na prática, quem provisiona cria o registro direto. Dois campos são obrigatórios e o segundo
-      costuma ser esquecido:
+      Pela interface, em <strong>Configurações → Tokens de acesso</strong>. Por API, o endpoint é
+      do serviço de autenticação e devolve o token em claro uma única vez — guarde na hora.
     </p>
 
-    <pre><code>AgentBot <span class="c-cmt"># (no container do CRM, via rails runner)</span>
-AccessToken.create!(
-  owner: User.find_by(email: <span class="c-str">'operador@cliente.com'</span>),
-  name:  <span class="c-str">'claude-code-provisionamento'</span>,   <span class="c-cmt"># NOT NULL</span>
-  token: SecureRandom.hex(32),           <span class="c-cmt"># NOT NULL na validação</span>
-  scopes: []
-)</code></pre>
+    <pre><code>curl -X POST https://evocrm-api.gruporugido.com/api/v1/access_tokens \
+  -H <span class="c-str">"Authorization: Bearer $JWT"</span> \
+  -H <span class="c-str">"Content-Type: application/json"</span> \
+  -d <span class="c-str">'{
+    "name":   "claude-code-provisionamento",
+    "scopes": "inboxes.read inboxes.create agent_bots.create"
+  }'</span>
+
+<span class="c-cmt"># → data.access_token.token: "d3263c338829a558…"</span></code></pre>
+
+    <p>
+      <code>name</code> e <code>scopes</code> são obrigatórios — <code>scopes</code> em branco
+      devolve <code>422</code>.
+    </p>
 
     <div class="armadilha">
-      <h4>O token não se gera sozinho</h4>
+      <h4><code>scopes</code> não restringe nada</h4>
       <p>
-        O modelo tem <code>before_create :generate_token</code>, mas a validação
-        <code>validates :token, presence: true</code> roda <em>antes</em> do callback. Criar sem
-        passar <code>token:</code> estoura <code>Token can't be blank</code>. E sem
-        <code>name:</code> estoura no banco, com <code>NotNullViolation</code>.
+        O campo é obrigatório e fica gravado, mas o CRM nunca o consulta: existe
+        <code>has_permission_scope?</code> no modelo e nenhuma chamada a ele em todo o código.
+        Verificado — uma chave criada com <code>"inboxes.read"</code> lê contatos e conversas
+        normalmente.
+      </p>
+      <p>
+        <strong>Uma chave alcança tudo que o dono dela alcança.</strong> Se você precisa de acesso
+        estreito, o caminho é criar um usuário com o papel certo e emitir a chave nele — não
+        confie no campo de escopo.
       </p>
     </div>
 
@@ -1003,8 +1014,8 @@ POST /api/v1/conversations/{id}/labels
           </tr>
           <tr>
             <td>Emitir chave</td>
-            <td><code>Token can't be blank</code></td>
-            <td>Passe <code>token:</code> e <code>name:</code> explicitamente.</td>
+            <td>Chave “estreita” pelos <code>scopes</code></td>
+            <td>O escopo não é consultado. A chave alcança tudo que o dono alcança.</td>
           </tr>
           <tr>
             <td>Recurso “sumiu”</td>
