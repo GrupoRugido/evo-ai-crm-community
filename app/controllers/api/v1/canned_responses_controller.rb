@@ -36,7 +36,9 @@ class Api::V1::CannedResponsesController < Api::V1::BaseController # rubocop:dis
     return if reject_invalid_signed_ids
     return if reject_oversized_attachments
 
-    @canned_response = CannedResponse.new(canned_response_params)
+    @canned_response = CannedResponse.new(
+      canned_response_params.merge(workspace_id: workspace_id_for_create(params[:canned_response]))
+    )
 
     if @canned_response.save
       attach_files if params[:attachments].present?
@@ -87,7 +89,9 @@ class Api::V1::CannedResponsesController < Api::V1::BaseController # rubocop:dis
   private
 
   def fetch_canned_response
-    @canned_response = CannedResponse.find(params[:id])
+    # EVO-CUSTOM: mesmo escopo do index. Sem isto a URL direta abre o
+    # registro do vizinho, que foi o que aconteceu com funis e times.
+    @canned_response = workspace_scope(CannedResponse.all).find(params[:id])
   end
 
   def fetch_canned_responses

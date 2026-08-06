@@ -73,7 +73,9 @@ class Api::V1::PipelinesController < Api::V1::BaseController
     # Check if user can create pipelines at the account level
     authorize Pipeline, :create?
 
-    @pipeline = Pipeline.new(pipeline_params.merge(created_by: Current.user))
+    @pipeline = Pipeline.new(
+      pipeline_params.merge(created_by: Current.user, workspace_id: workspace_id_for_create(params[:pipeline]))
+    )
 
     ActiveRecord::Base.transaction do
       @pipeline.save!

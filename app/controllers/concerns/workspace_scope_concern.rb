@@ -63,4 +63,35 @@ module WorkspaceScopeConcern
 
     relation.where(column => Current.workspace_id)
   end
+
+  # EVO-CUSTOM: workspace que um registro NOVO deve receber.
+  #
+  # Existe porque criar pela API era o caminho que furava o modelo: os
+  # controllers de inbox, agente, automacao, etiqueta e resposta rapida nunca
+  # tocavam em workspace_id, entao tudo que os colaboradores criavam por script
+  # nascia global — visivel para todos os clientes. So teams e workspaces
+  # atribuiam.
+  #
+  # Precedencia:
+  #   1. Usuario de CLIENTE  -> o workspace dele, sempre. Ignora corpo e header:
+  #      cliente nao cria coisa no workspace do vizinho.
+  #   2. ADMIN               -> workspace_id do corpo (validado contra a tabela),
+  #      senao o header X-Workspace-Id, senao nil (global, de proposito).
+  #
+  # O corpo e aceito alem do header porque a API e usada por script: exigir
+  # header numa chamada que ja manda JSON e o tipo de detalhe que faz o agente
+  # de IA errar e criar o recurso no lugar errado.
+  def workspace_id_for_create(corpo = nil)
+    return current_user_workspace_id if current_user_workspace_id.present?
+    return Current.workspace_id unless admin_pode_escolher_workspace?
+
+    pedido = corpo.is_a?(ActionController::Parameters) || corpo.is_a?(Hash) ? corpo[:workspace_id] : corpo
+    return Current.workspace_id if pedido.blank?
+
+    Workspace.where(id: pedido).pick(:id)
+  end
+
+  def admin_pode_escolher_workspace?
+    current_user&.administrator? || Current.evo_can_read_all_inboxes
+  end
 end

@@ -219,7 +219,7 @@ class Api::V1::ContactsController < Api::V1::BaseController
     return if render_invalid_create_labels_error
 
     ActiveRecord::Base.transaction do
-      @contact = Contact.all.new(contact_create_params)
+      @contact = Contact.all.new(contact_create_params.merge(workspace_id: workspace_id_for_create(params[:contact])))
       @contact.save!
       process_company_associations
       @contact_inbox = build_contact_inbox

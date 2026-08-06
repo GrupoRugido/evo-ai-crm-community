@@ -33,7 +33,9 @@ class Api::V1::AgentBotsController < Api::V1::BaseController
   end
 
   def create
-    @agent_bot = AgentBot.create!(permitted_params.except(:avatar_url))
+    @agent_bot = AgentBot.create!(
+      permitted_params.except(:avatar_url).merge(workspace_id: workspace_id_for_create(params[:agent_bot]))
+    )
     process_avatar_from_url
     
     success_response(

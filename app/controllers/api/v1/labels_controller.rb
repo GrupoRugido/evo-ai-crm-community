@@ -31,7 +31,7 @@ class Api::V1::LabelsController < Api::V1::BaseController
   end
 
   def create
-    @label = Label.all.new(permitted_params)
+    @label = Label.all.new(permitted_params.merge(workspace_id: workspace_id_for_create(params[:label])))
     
     if @label.save
       success_response(
@@ -80,7 +80,9 @@ class Api::V1::LabelsController < Api::V1::BaseController
   private
 
   def fetch_label
-    @label = Label.all.find(params[:id])
+    # EVO-CUSTOM: mesmo escopo do index. Sem isto a URL direta abre o
+    # registro do vizinho, que foi o que aconteceu com funis e times.
+    @label = workspace_scope(Label.all).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     error_response(
       ApiErrorCodes::LABEL_NOT_FOUND,

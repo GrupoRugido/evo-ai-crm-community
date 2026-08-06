@@ -50,7 +50,9 @@ class Api::V1::AutomationRulesController < Api::V1::BaseController
   end
 
   def create
-    @automation_rule = AutomationRule.new(automation_rules_permit)
+    @automation_rule = AutomationRule.new(
+      automation_rules_permit.merge(workspace_id: workspace_id_for_create(params[:automation_rule]))
+    )
     @automation_rule.actions = params[:actions]
     @automation_rule.conditions = params[:conditions]
     @automation_rule.flow_data = params[:flow_data] if params[:flow_data]

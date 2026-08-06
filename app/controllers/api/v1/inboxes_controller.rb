@@ -111,10 +111,15 @@ module Api
             else
               inbox_params[:display_name] = permitted_params[:display_name] || params[:inbox]&.dig(:display_name)
             end
+            # EVO-CUSTOM: canal criado pela API precisa nascer no workspace certo.
+            # Sem isto todo canal criado por script ficava global e aparecia para
+            # todos os clientes — e criar canal por API e justamente o caminho do
+            # WhatsApp oficial, que nao tem tela.
             @inbox = Inbox.new(
               {
                 name: inbox_name_value,
-                channel: channel
+                channel: channel,
+                workspace_id: workspace_id_for_create(params[:inbox])
               }.merge(inbox_params)
             )
             Rails.logger.info "[InboxesController] Creating inbox with name: #{@inbox.name.inspect}, display_name: #{@inbox.display_name.inspect}"
