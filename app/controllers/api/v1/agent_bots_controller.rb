@@ -15,7 +15,11 @@ class Api::V1::AgentBotsController < Api::V1::BaseController
   before_action :validate_agent_bot_limit, only: [:create]
 
   def index
-    @agent_bots = AgentBot.all
+    # EVO-CUSTOM: sem isto a lista de agentes de IA nao respondia ao seletor de
+    # workspace — o super admin dentro do Oral Riso via os 11 agentes de todas as
+    # clinicas. Escopo permissivo: agente global (nosso, compartilhado) segue
+    # visivel dentro de qualquer workspace, que e como ele e usado.
+    @agent_bots = workspace_scope(AgentBot.all)
     
     apply_pagination
     
@@ -132,7 +136,9 @@ class Api::V1::AgentBotsController < Api::V1::BaseController
   private
 
   def agent_bot
-    @agent_bot = AgentBot.find(params[:id])
+    # Mesmo escopo do index: esconder da lista nao basta, a URL direta abria o
+    # agente do vizinho — foi o que aconteceu com funis, times e etiquetas.
+    @agent_bot = workspace_scope(AgentBot.all).find(params[:id])
   end
 
   def permitted_params

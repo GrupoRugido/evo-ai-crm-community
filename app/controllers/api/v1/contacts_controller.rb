@@ -439,7 +439,28 @@ class Api::V1::ContactsController < Api::V1::BaseController
     # EVO-CUSTOM: unrestricted_inbox_access? ja considera o workspace — ver User.
     return nil if current_user.nil? || current_user.unrestricted_inbox_access?
 
-    ContactInbox.where(inbox_id: current_user.assigned_inboxes.select(:id)).select(:contact_id)
+    por_caixa = ContactInbox.where(inbox_id: current_user.assigned_inboxes.select(:id)).select(:contact_id)
+    estreitar_por_dono(por_caixa)
+  end
+
+  # EVO-CUSTOM: espelha em contatos a visibilidade das conversas.
+  #
+  # Sem isto o atendente restrito a "apenas as minhas" continuava com a agenda
+  # inteira da clinica na aba Contatos — leria nome, telefone e historico de
+  # todo mundo, que e justamente o que a restricao existe para evitar. A conta
+  # sai das conversas: contato com quem eu falo e contato de conversa minha.
+  def estreitar_por_dono(escopo_por_caixa)
+    visibilidade = current_user.conversation_visibility_for(Current.workspace_id)
+    return escopo_por_caixa if visibilidade == 'todas'
+
+    minhas = Conversation.where(inbox_id: current_user.assigned_inboxes.select(:id))
+    minhas = if visibilidade == 'fila'
+               minhas.where('conversations.assignee_id IS NULL OR conversations.assignee_id = ?', current_user.id)
+             else
+               minhas.where(assignee_id: current_user.id)
+             end
+
+    Contact.where(id: escopo_por_caixa).where(id: minhas.select(:contact_id)).select(:id)
   end
 
   def scope_contacts_to_inboxes(relation)

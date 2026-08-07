@@ -74,6 +74,12 @@ class User < ApplicationRecord
   has_many :participating_conversations, through: :conversation_participants, source: :conversation
   has_many :inbox_members, dependent: :destroy_async
   has_many :inboxes, through: :inbox_members, source: :inbox
+
+  # EVO-CUSTOM: a que clientes esta pessoa pertence, com papel e visibilidade
+  # proprios em cada um. Carregado inteiro de uma vez porque os helpers abaixo
+  # consultam varias vezes por requisicao.
+  has_many :workspace_memberships, class_name: 'WorkspaceMember', dependent: :destroy
+  has_many :workspaces, through: :workspace_memberships
   has_many :messages, as: :sender, dependent: :nullify
   has_many :custom_filters, dependent: :destroy_async
   has_many :dashboard_apps, dependent: :nullify
@@ -154,11 +160,32 @@ class User < ApplicationRecord
     # The old `inbox_members.empty? -> Inbox.all` degrade made that revoke
     # unenforceable for users with no memberships — the common state, since
     # most installs never assigned inboxes.
-    return inboxes.where(workspace_id: workspace_id) if belongs_to_workspace?
+    ws = active_workspace_id
+    return inboxes_do_workspace(ws) if ws.present?
 
     return Inbox.all if unrestricted_inbox_access?
 
     inboxes
+  end
+
+  # EVO-CUSTOM: quem alcanca TODAS as caixas de um workspace, e quem alcanca so
+  # as suas.
+  #
+  #   - GESTOR do workspace: todas. E o que separa "supervisor de atendimento" de
+  #     "atendente" — sem isto, dar a supervisao a alguem exigiria adiciona-lo a
+  #     cada caixa na mao, e uma caixa nova nasceria invisivel para ele.
+  #
+  #   - NOSSO ADMIN que entrou pelo seletor: todas tambem. Sem esta linha ele
+  #     recebia ZERO: `inboxes` passa por inbox_members, e admin nosso nao e
+  #     membro de caixa nenhuma. Medido — ao escolher um workspace no seletor, a
+  #     tela de Canais ficava vazia, que e pior que nao filtrar, porque parece
+  #     que o cliente nao tem canal.
+  #
+  #   - membro comum: so as caixas de que participa, dentro do workspace.
+  def inboxes_do_workspace(workspace_id)
+    return Inbox.where(workspace_id: workspace_id) if gestor_de?(workspace_id) || !belongs_to_workspace?
+
+    inboxes.where(workspace_id: workspace_id)
   end
 
   # EVO-CUSTOM: usuario que PERTENCE a um workspace nunca ve tudo, mesmo com
@@ -174,13 +201,56 @@ class User < ApplicationRecord
   # contatos, no SearchService e no dashboard, e corrigir so o assigned_inboxes
   # deixava os outros vazando.
   def belongs_to_workspace?
-    respond_to?(:workspace_id) && workspace_id.present?
+    workspace_memberships.any?
   end
 
   def unrestricted_inbox_access?
     return false if belongs_to_workspace?
 
+    # EVO-CUSTOM: entrar num workspace pelo seletor e uma LENTE, e ninguem a fura
+    # — nem quem tem acesso amplo. "Irrestrito" quer dizer que ele PODE escolher
+    # qualquer workspace, nao que a escolha seja ignorada.
+    #
+    # Sem esta linha o seletor trocava a logo e as listas de funil/etiqueta, mas
+    # contatos, busca e painel seguiam mostrando a instalacao inteira. Medido: com
+    # o Oral Riso selecionado, o super admin via os 1.997 contatos de todas as
+    # clinicas em vez dos 271 dele.
+    return false if Current.workspace_id.present?
+
     administrator? || Current.evo_can_read_all_inboxes
+  end
+
+  # EVO-CUSTOM: o cliente ativo desta requisicao.
+  #
+  # Current.workspace_id e resolvido pelo WorkspaceScopeConcern e ja considera o
+  # seletor do admin. Fora de uma requisicao (jobs, console) ele e nil, e ai vale
+  # o vinculo unico — quem tem exatamente um cliente nao tem o que escolher.
+  # Quem tem varios e esta fora de requisicao fica sem workspace ativo de
+  # proposito: adivinhar qual seria pior que nao responder.
+  def active_workspace_id
+    return Current.workspace_id if Current.workspace_id.present?
+
+    ids = workspace_ids
+    ids.size == 1 ? ids.first : nil
+  end
+
+  def workspace_ids
+    @workspace_ids ||= workspace_memberships.pluck(:workspace_id)
+  end
+
+  def membership_for(workspace_id)
+    return nil if workspace_id.blank?
+
+    workspace_memberships.detect { |m| m.workspace_id == workspace_id }
+  end
+
+  def gestor_de?(workspace_id)
+    membership_for(workspace_id)&.gestor? || false
+  end
+
+  # Sem vinculo (nossa equipe) nao ha restricao por dono — quem limita e o papel.
+  def conversation_visibility_for(workspace_id)
+    membership_for(workspace_id)&.conversation_visibility || 'todas'
   end
 
   def serializable_hash(options = nil)
